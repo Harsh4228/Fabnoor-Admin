@@ -39,7 +39,7 @@ const App = () => {
                 <Route path="/list" element={<List token={token} />} />
                 <Route path="/orders" element={<Orders token={token} />} />
                  <Route path="/reels" element={<ReelsAdmin token={token} />} />
-                <Route path="*" element={<h2>Page Not Found</h2>} />
+                <Route path="*" element={<List token={token}/>} />
               </Routes>
             </div>
           </div>
