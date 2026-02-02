@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-import { backendUrl, currency } from "../App";
+import { backendUrl, currency } from "../constants";
 import { toast } from "react-toastify";
 import { assets } from "../assets/assets";
 
@@ -16,7 +16,7 @@ const Order = ({ token }) => {
   const [showRaw, setShowRaw] = useState(false);
 
   /* ================= FETCH ORDERS ================= */
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -39,11 +39,11 @@ const Order = ({ token }) => {
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchOrders();
-  }, [token]);
+  }, [fetchOrders]);
 
   /* ================= UPDATE STATUS ================= */
   const updateStatus = async (orderId, status) => {

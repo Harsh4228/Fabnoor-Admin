@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { backendUrl, currency } from "../App";
+import { backendUrl, currency } from "../constants";
 import { toast } from "react-toastify";
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];

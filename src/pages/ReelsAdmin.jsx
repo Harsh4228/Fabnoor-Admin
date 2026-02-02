@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { backendUrl } from "../App";
+import { backendUrl } from "../constants";
 
 const ReelsAdmin = ({ token }) => {
   const [reels, setReels] = useState([]);
