@@ -8,10 +8,14 @@ const Navbar = ({ setToken }) => {
         
         {/* Logo Section */}
         <div className='flex items-center gap-3'>
-          <img 
-            className='w-[max(10%,80px)] sm:w-[max(12%,100px)] h-auto transition-transform hover:scale-105' 
-            src={assets.logo} 
-            alt="Logo" 
+          <img
+            className='w-[max(10%,80px)] sm:w-[max(12%,100px)] h-auto transition-transform hover:scale-105'
+            src={'/logo.png'}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = assets.logo;
+            }}
+            alt="Logo"
           />
         </div>
 
