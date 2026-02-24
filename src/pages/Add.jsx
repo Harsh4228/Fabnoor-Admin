@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import axios from "axios";
 import { backendUrl } from "../constants";
 import { toast } from "react-toastify";
+import { formatNumber } from "../utils/price";
 
-const SIZES = ["S", "M", "L", "XL", "XXL"];
+const SIZES = ["S","M","L","XL","XXL","XXXL","4XL","5XL","6XL","7XL","Free Size"];
 
 // SAFE KEY (must match backend)
 const getKey = (value) => value.trim().toLowerCase().replace(/\s+/g, "_");
@@ -23,7 +24,7 @@ const Add = ({ token }) => {
   const addVariant = () => {
     setVariants((prev) => [
       ...prev,
-      { color: "", type: "", images: [], sizes: [], price: "", stock: "" },
+      { color: "", type: "", code: "", images: [], sizes: [], price: "", stock: "" },
     ]);
   };
 
@@ -76,6 +77,11 @@ const Add = ({ token }) => {
         return false;
       }
 
+      if (!v.code || !v.code.trim()) {
+        toast.error(`Variant code is required for ${v.color || "(unknown)"}`);
+        return false;
+      }
+
       if (!v.images.length) {
         toast.error(`Images required for ${v.color}`);
         return false;
@@ -122,6 +128,7 @@ const Add = ({ token }) => {
         JSON.stringify(
           variants.map((v) => ({
             color: v.color,
+            code: v.code,
             type: v.type,
             sizes: v.sizes, // ["S","M"]
             price: Number(v.price),
@@ -285,7 +292,7 @@ const Add = ({ token }) => {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2">
                             Color
@@ -313,13 +320,27 @@ const Add = ({ token }) => {
                             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all"
                           />
                         </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Variant Code
+                          </label>
+                          <input
+                            placeholder="SKU or code"
+                            value={variant.code}
+                            onChange={(e) =>
+                              updateVariant(vIndex, "code", e.target.value)
+                            }
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all"
+                          />
+                        </div>
                       </div>
 
                       {/* ✅ Price & Stock at variant level */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Variant Price (Wholesale)
+                            Variant Price (per-piece wholesale)
                           </label>
                           <input
                             type="number"
@@ -331,6 +352,13 @@ const Add = ({ token }) => {
                             }
                             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all"
                           />
+                          {variant.price && variant.sizes?.length > 0 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Set price: ₹{formatNumber(
+                                Number(variant.price) * variant.sizes.length
+                              )}
+                            </p>
+                          )}
                         </div>
 
                         <div>

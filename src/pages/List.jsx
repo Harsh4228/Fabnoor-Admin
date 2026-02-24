@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { backendUrl, currency } from "../constants";
 import { toast } from "react-toastify";
+import { formatNumber } from "../utils/price";
 
-const SIZES = ["S", "M", "L", "XL", "XXL"];
+const SIZES = ["S","M","L","XL","XXL","XXXL","4XL","5XL","6XL","7XL","Free Size"];
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const getKey = (v) => v.trim().toLowerCase().replace(/\s+/g, "_");
@@ -53,7 +54,7 @@ const List = ({ token }) => {
       ...p,
       variants: [
         ...(p.variants || []),
-        { color: "", type: "", images: [], sizes: [], price: "", stock: "" },
+        { color: "", type: "", code: "", images: [], sizes: [], price: "", stock: "" },
       ],
     }));
   };
@@ -113,6 +114,10 @@ const List = ({ token }) => {
           toast.error("Variant color and type are required");
           return;
         }
+        if (!v.code || !v.code.trim()) {
+          toast.error(`Variant code is required for ${v.color || "(unknown)"}`);
+          return;
+        }
         if (!v.sizes || v.sizes.length === 0) {
           toast.error(`Select at least one size for ${v.color}`);
           return;
@@ -139,6 +144,7 @@ const List = ({ token }) => {
       // ✅ payload must match schema/controller
       const payload = editProduct.variants.map((v) => ({
         color: v.color,
+        code: v.code,
         type: v.type,
         sizes: v.sizes, // ["S","M"]
         price: Number(v.price),
@@ -365,7 +371,7 @@ const List = ({ token }) => {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <input
                           className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
                           value={v.color}
@@ -382,6 +388,14 @@ const List = ({ token }) => {
                           }
                           placeholder="Type / Material"
                         />
+                        <input
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
+                          value={v.code || ""}
+                          onChange={(e) =>
+                            updateVariantField(vIndex, "code", e.target.value)
+                          }
+                          placeholder="Variant Code"
+                        />
                       </div>
 
                       {/* ✅ Variant Price & Stock */}
@@ -394,8 +408,13 @@ const List = ({ token }) => {
                           onChange={(e) =>
                             updateVariantField(vIndex, "price", e.target.value)
                           }
-                          placeholder="Variant Price"
+                          placeholder="Variant Price (per-piece)"
                         />
+                        {v.price && v.sizes?.length > 0 && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Set price: ₹{formatNumber(Number(v.price) * v.sizes.length)}
+                          </p>
+                        )}
                         <input
                           type="number"
                           min="0"

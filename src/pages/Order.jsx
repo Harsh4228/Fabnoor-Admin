@@ -5,7 +5,13 @@ import { toast } from "react-toastify";
 import { assets } from "../assets/assets";
 
 /* ================= CONFIG ================= */
-const STATUS_TABS = ["Order Placed", "Delivered", "Cancelled"];
+const STATUS_TABS = [
+  "Order Placed",
+  "Dispatched",
+  "Out for Delivery",
+  "Delivered",
+  "Cancelled",
+];
 const PAGE_SIZE = 6;
 
 const Order = ({ token }) => {
@@ -13,6 +19,7 @@ const Order = ({ token }) => {
   const [activeStatus, setActiveStatus] = useState("Order Placed");
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [statusUpdating, setStatusUpdating] = useState(null);
   const [showRaw, setShowRaw] = useState(false);
 
   /* ================= FETCH ORDERS ================= */
@@ -32,7 +39,8 @@ const Order = ({ token }) => {
 
       if (res.data.success) {
         const list = Array.isArray(res.data.orders) ? res.data.orders : [];
-        setOrders([...list].reverse()); // ✅ safe reverse
+        // backend already returns newest-first; preserve that order so newest appears first
+        setOrders(list);
       } else {
         toast.error(res.data.message || "Failed to fetch orders");
       }
@@ -47,6 +55,7 @@ const Order = ({ token }) => {
 
   /* ================= UPDATE STATUS ================= */
   const updateStatus = async (orderId, status) => {
+    setStatusUpdating(orderId);
     try {
       const res = await axios.post(
         `${backendUrl}/api/order/status`,
@@ -59,17 +68,27 @@ const Order = ({ token }) => {
       );
 
       if (res.data.success) {
-        toast.success(
-          status === "Delivered"
-            ? "Order marked as Delivered"
-            : "Order Cancelled"
+        // Optimistically update local lists so UI reflects change immediately
+        setOrders((prev) =>
+          prev.map((o) => (o._id === orderId ? { ...o, status } : o))
         );
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder((prev) => ({ ...prev, status }));
+        }
+
+        toast.success(`Order marked as ${status}`);
+        // fetch fresh data in background to keep everything in sync
         fetchOrders();
       } else {
         toast.error(res.data.message || "Failed to update status");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      // Refresh list to sync state — server may have partially succeeded
+      await fetchOrders();
+      toast.error("Failed to update status (server error). List refreshed.");
+      console.error("Update status error:", error);
+    } finally {
+      setStatusUpdating(null);
     }
   };
 
@@ -97,6 +116,29 @@ const Order = ({ token }) => {
     }
   };
 
+  /* ================= DOWNLOAD INVOICE (ADMIN) ================= */
+  const downloadInvoice = async (orderId) => {
+    try {
+      const res = await axios.get(`${backendUrl}/api/order/invoice/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const filename = `invoice-${(orders.find(o=>o._id===orderId)?.orderNumber) || orderId}.pdf`;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || "Failed to download slip");
+    }
+  };
+
   /* ================= FILTER + PAGINATION ================= */
   const filteredOrders = orders.filter((order) => order.status === activeStatus);
 
@@ -113,7 +155,32 @@ const Order = ({ token }) => {
   const statusColor = (status) => {
     if (status === "Delivered") return "text-green-600";
     if (status === "Cancelled") return "text-red-600";
+    if (status === "Dispatched") return "text-amber-600";
+    if (status === "Out for Delivery") return "text-orange-600";
     return "text-blue-600";
+  };
+
+  /* ================= NEXT ACTIONS FOR STATUS TRANSITIONS ================= */
+  const getNextActions = (status) => {
+    switch (status) {
+      case "Order Placed":
+        return [
+          { label: "Dispatch", status: "Dispatched", color: "from-indigo-500 to-indigo-600" },
+          { label: "Cancel", status: "Cancelled", color: "from-red-500 to-red-600" },
+        ];
+      case "Dispatched":
+        return [
+          { label: "Out for Delivery", status: "Out for Delivery", color: "from-yellow-500 to-yellow-600" },
+          { label: "Cancel", status: "Cancelled", color: "from-red-500 to-red-600" },
+        ];
+      case "Out for Delivery":
+        return [
+          { label: "Mark Delivered", status: "Delivered", color: "from-green-500 to-green-600" },
+          { label: "Cancel", status: "Cancelled", color: "from-red-500 to-red-600" },
+        ];
+      default:
+        return [];
+    }
   };
 
   /* ================= SAFE ADDRESS ================= */
@@ -185,6 +252,7 @@ const Order = ({ token }) => {
           <div className="space-y-4 md:space-y-6">
             {paginatedOrders.map((order) => {
               const paymentLocked = order.status === "Cancelled";
+              const actions = getNextActions(order.status);
 
               return (
                 <div
@@ -310,20 +378,18 @@ const Order = ({ token }) => {
                         Toggle Payment
                       </button>
 
-                      {order.status === "Order Placed" && (
+                      {actions.length > 0 && (
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => updateStatus(order._id, "Delivered")}
-                            className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
-                          >
-                            Deliver
-                          </button>
-                          <button
-                            onClick={() => updateStatus(order._id, "Cancelled")}
-                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
-                          >
-                            Cancel
-                          </button>
+                          {actions.map((a) => (
+                                <button
+                                  key={a.status}
+                                  onClick={() => updateStatus(order._id, a.status)}
+                                  disabled={statusUpdating === order._id}
+                                  className={`flex-1 ${statusUpdating === order._id ? 'opacity-60 cursor-wait' : ''} bg-gradient-to-r ${a.color} text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all`}
+                                >
+                                  {statusUpdating === order._id ? 'Please wait...' : a.label}
+                                </button>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -367,19 +433,51 @@ const Order = ({ token }) => {
                   <div>
                     <h3 className="text-2xl font-bold">Order Details</h3>
                     <p className="text-sm text-blue-100 mt-1">
-                      Order ID: {selectedOrder._id}
+                      Order No: {selectedOrder.orderNumber || selectedOrder._id}
+                    </p>
+                    <p className="text-sm text-blue-100 mt-1">
+                      Customer: {selectedOrder.userId?.name || selectedOrder?.address?.fullName || "Customer"} • {selectedOrder.userId?.email || "-"}
                     </p>
                   </div>
-                  <button
-                    onClick={() => setSelectedOrder(null)}
-                    className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
-                  >
-                    ✕
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); downloadInvoice(selectedOrder._id); }}
+                      className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-md text-sm"
+                    >
+                      Download Slip
+                    </button>
+
+                    <button
+                      onClick={() => setSelectedOrder(null)}
+                      className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div className="p-6 space-y-6">
+                {/* TIMELINE */}
+                <div className="bg-white p-4 rounded-xl border border-gray-100">
+                  <div className="flex items-center gap-4">
+                    {STATUS_TABS.map((s, idx) => {
+                      const done = STATUS_TABS.indexOf(selectedOrder.status) >= idx;
+                      const isActive = selectedOrder.status === s;
+
+                      return (
+                        <div key={s} className="flex-1 text-center">
+                          <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center ${done ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                            {done ? '✓' : idx + 1}
+                          </div>
+                          <div className={`text-xs mt-2 ${isActive ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
+                            {s}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
                 {/* ORDER SUMMARY */}
                 <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-2xl border border-blue-100">
                   <h4 className="font-bold text-lg mb-4 text-gray-800">
@@ -459,6 +557,7 @@ const Order = ({ token }) => {
                             Product
                           </th>
                           <th className="px-4 py-3 text-left">Color</th>
+                          <th className="px-4 py-3 text-left">Code</th>
                           <th className="px-4 py-3 text-center">Size</th>
                           <th className="px-4 py-3 text-center">Qty</th>
                           <th className="px-4 py-3 text-right">Price</th>
@@ -475,6 +574,7 @@ const Order = ({ token }) => {
                           >
                             <td className="px-4 py-3 font-semibold">{item.name}</td>
                             <td className="px-4 py-3">{item.color}</td>
+                            <td className="px-4 py-3">{item.code || "-"}</td>
                             <td className="px-4 py-3 text-center">{item.size}</td>
                             <td className="px-4 py-3 text-center font-semibold">
                               {item.quantity}
