@@ -4,7 +4,7 @@ import { backendUrl } from "../constants";
 import { toast } from "react-toastify";
 import { formatNumber } from "../utils/price";
 
-const SIZES = ["S","M","L","XL","XXL","XXXL","4XL","5XL","6XL","7XL","Free Size"];
+const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL", "4XL", "5XL", "6XL", "7XL", "Free Size"];
 
 // SAFE KEY (must match backend)
 const getKey = (value) => value.trim().toLowerCase().replace(/\s+/g, "_");
@@ -24,7 +24,7 @@ const Add = ({ token }) => {
   const addVariant = () => {
     setVariants((prev) => [
       ...prev,
-      { color: "", type: "", code: "", images: [], sizes: [], price: "", stock: "" },
+      { color: "", fabric: "", code: "", images: [], sizes: [], price: "", stock: "" },
     ]);
   };
 
@@ -72,8 +72,8 @@ const Add = ({ token }) => {
     }
 
     for (let v of variants) {
-      if (!v.color || !v.type) {
-        toast.error("Variant color and type are required");
+      if (!v.color || !v.fabric) {
+        toast.error("Variant color and fabric are required");
         return false;
       }
 
@@ -129,7 +129,7 @@ const Add = ({ token }) => {
           variants.map((v) => ({
             color: v.color,
             code: v.code,
-            type: v.type,
+            fabric: v.fabric,
             sizes: v.sizes, // ["S","M"]
             price: Number(v.price),
             stock: Number(v.stock || 0),
@@ -139,7 +139,7 @@ const Add = ({ token }) => {
 
       // ✅ Images (dynamic keys)
       variants.forEach((variant) => {
-        const key = `${getKey(variant.color)}_${getKey(variant.type)}_images`;
+        const key = `${getKey(variant.color)}_${getKey(variant.fabric)}_images`;
         variant.images.forEach((file) => {
           formData.append(key, file);
         });
@@ -309,13 +309,13 @@ const Add = ({ token }) => {
 
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Type/Material
+                            Fabric/Material
                           </label>
                           <input
                             placeholder="e.g., Cotton, Silk, Polyester"
-                            value={variant.type}
+                            value={variant.fabric}
                             onChange={(e) =>
-                              updateVariant(vIndex, "type", e.target.value)
+                              updateVariant(vIndex, "fabric", e.target.value)
                             }
                             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all"
                           />
@@ -386,7 +386,7 @@ const Add = ({ token }) => {
                         <input
                           type="file"
                           multiple
-                          disabled={!variant.color || !variant.type}
+                          disabled={!variant.color || !variant.fabric}
                           onChange={(e) =>
                             handleImages(vIndex, e.target.files)
                           }
@@ -414,11 +414,10 @@ const Add = ({ token }) => {
                                 key={size}
                                 type="button"
                                 onClick={() => toggleSize(vIndex, size)}
-                                className={`py-2 rounded-xl font-bold transition-all border-2 ${
-                                  selected
+                                className={`py-2 rounded-xl font-bold transition-all border-2 ${selected
                                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent shadow-md"
                                     : "bg-white border-gray-300 text-gray-600 hover:border-purple-400"
-                                }`}
+                                  }`}
                               >
                                 {size}
                               </button>

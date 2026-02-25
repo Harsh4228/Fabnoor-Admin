@@ -4,7 +4,7 @@ import { backendUrl, currency } from "../constants";
 import { toast } from "react-toastify";
 import { formatNumber } from "../utils/price";
 
-const SIZES = ["S","M","L","XL","XXL","XXXL","4XL","5XL","6XL","7XL","Free Size"];
+const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL", "4XL", "5XL", "6XL", "7XL", "Free Size"];
 
 const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
 const getKey = (v) => v.trim().toLowerCase().replace(/\s+/g, "_");
@@ -12,6 +12,7 @@ const getKey = (v) => v.trim().toLowerCase().replace(/\s+/g, "_");
 const List = ({ token }) => {
   const [products, setProducts] = useState([]);
   const [editProduct, setEditProduct] = useState(null);
+  const [viewProduct, setViewProduct] = useState(null);
 
   /* ================= FETCH ================= */
   const fetchProducts = async () => {
@@ -54,7 +55,7 @@ const List = ({ token }) => {
       ...p,
       variants: [
         ...(p.variants || []),
-        { color: "", type: "", code: "", images: [], sizes: [], price: "", stock: "" },
+        { color: "", fabric: "", code: "", images: [], sizes: [], price: "", stock: "" },
       ],
     }));
   };
@@ -110,8 +111,8 @@ const List = ({ token }) => {
       }
 
       for (let v of editProduct.variants) {
-        if (!v.color || !v.type) {
-          toast.error("Variant color and type are required");
+        if (!v.color || !(v.fabric || v.type)) {
+          toast.error("Variant color and fabric are required");
           return;
         }
         if (!v.code || !v.code.trim()) {
@@ -145,8 +146,8 @@ const List = ({ token }) => {
       const payload = editProduct.variants.map((v) => ({
         color: v.color,
         code: v.code,
-        type: v.type,
-        sizes: v.sizes, // ["S","M"]
+        fabric: v.fabric || v.type || "",
+        sizes: v.sizes,
         price: Number(v.price),
         stock: Number(v.stock || 0),
         existingImages: v.images,
@@ -157,7 +158,8 @@ const List = ({ token }) => {
       // upload new images if any
       editProduct.variants.forEach((v) => {
         if (v.newImages?.length) {
-          const key = `${getKey(v.color)}_${getKey(v.type)}_images`;
+          const fabricVal = v.fabric || v.type || "";
+          const key = `${getKey(v.color)}_${getKey(fabricVal)}_images`;
           v.newImages.forEach((file) => fd.append(key, file));
         }
       });
@@ -178,11 +180,23 @@ const List = ({ token }) => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            All Products
-          </h2>
-          <p className="text-gray-500">Manage your product inventory</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              All Products
+            </h2>
+            <p className="text-gray-500">Manage your product inventory</p>
+          </div>
+          <button
+            onClick={fetchProducts}
+            className="flex items-center gap-2 bg-white border-2 border-gray-200 hover:border-blue-400 text-gray-700 hover:text-blue-600 px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh Stock
+          </button>
         </div>
 
         {/* PRODUCT LIST */}
@@ -206,7 +220,8 @@ const List = ({ token }) => {
               {products.map((p) => (
                 <div
                   key={p._id}
-                  className="grid grid-cols-1 md:grid-cols-[120px_1fr_150px_200px] gap-4 p-4 md:p-6 items-center hover:bg-gray-50 transition-colors"
+                  className="grid grid-cols-1 md:grid-cols-[120px_1fr_150px_200px] gap-4 p-4 md:p-6 items-center hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => setViewProduct(p)}
                 >
                   {/* Image */}
                   <div className="flex justify-center md:justify-start">
@@ -222,7 +237,7 @@ const List = ({ token }) => {
                     <p className="font-bold text-lg text-gray-900 mb-1">
                       {p.name}
                     </p>
-                    <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                    <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-2">
                       <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
                         {p.category}
                       </span>
@@ -234,6 +249,23 @@ const List = ({ token }) => {
                           ⭐ Bestseller
                         </span>
                       )}
+                    </div>
+                    {/* Per-variant stock — admin only */}
+                    <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
+                      {(p.variants || []).map((v, i) => {
+                        const stock = Number(v.stock || 0);
+                        const label = `${v.color}${v.fabric || v.type ? ` / ${v.fabric || v.type}` : ""}`;
+                        const badgeClass = stock === 0
+                          ? "bg-red-100 text-red-700"
+                          : stock < 6
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-green-100 text-green-700";
+                        return (
+                          <span key={v.code || i} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${badgeClass}`}>
+                            {label}: {stock === 0 ? "Out" : stock}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -247,22 +279,141 @@ const List = ({ token }) => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-3 justify-center">
+                  <div className="flex gap-3 justify-center" onClick={(e) => e.stopPropagation()}>
                     <button
-                      className="flex-1 md:flex-none bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
-                      onClick={() => setEditProduct(deepClone(p))}
+                      className="flex-1 md:flex-none bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                      onClick={(e) => { e.stopPropagation(); setViewProduct(p); }}
+                    >
+                      View
+                    </button>
+                    <button
+                      className="flex-1 md:flex-none bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                      onClick={(e) => { e.stopPropagation(); setEditProduct(deepClone(p)); }}
                     >
                       Edit
                     </button>
                     <button
-                      className="flex-1 md:flex-none bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
-                      onClick={() => removeProduct(p._id)}
+                      className="flex-1 md:flex-none bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                      onClick={(e) => { e.stopPropagation(); removeProduct(p._id); }}
                     >
                       Delete
                     </button>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ================= VIEW MODAL ================= */}
+        {viewProduct && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+            <div className="bg-white max-w-4xl w-full rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold">{viewProduct.name}</h2>
+                  <div className="flex gap-2 mt-1">
+                    <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">{viewProduct.category}</span>
+                    <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">{viewProduct.subCategory}</span>
+                    {viewProduct.bestseller && <span className="bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-xs font-bold">⭐ Bestseller</span>}
+                  </div>
+                </div>
+                <button onClick={() => setViewProduct(null)} className="text-white hover:text-red-200 text-2xl font-bold transition-colors">✕</button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Description */}
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Description</p>
+                  <p className="text-gray-700 leading-relaxed">{viewProduct.description || "No description provided."}</p>
+                </div>
+
+                {/* Variants */}
+                <div>
+                  <p className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">
+                    Variants ({viewProduct.variants?.length || 0})
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(viewProduct.variants || []).map((v, i) => {
+                      const stock = Number(v.stock || 0);
+                      const fabricLabel = v.fabric || v.type || "";
+                      const setPrice = Number(v.price || 0) * (v.sizes?.length || 1);
+                      const stockBadge = stock === 0
+                        ? "bg-red-100 text-red-700"
+                        : stock < 6
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-green-100 text-green-700";
+                      return (
+                        <div key={v.code || i} className="border-2 border-gray-100 rounded-2xl p-4 hover:border-emerald-200 transition-colors">
+                          {/* Images row */}
+                          <div className="flex gap-2 mb-3 overflow-x-auto">
+                            {(v.images || []).map((img, ii) => (
+                              <img key={ii} src={img} className="w-16 h-16 object-cover rounded-xl border border-gray-100 flex-shrink-0" alt="" />
+                            ))}
+                          </div>
+
+                          {/* Info grid */}
+                          <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                            <div>
+                              <p className="text-gray-400 text-xs">Color</p>
+                              <p className="font-semibold text-gray-800">{v.color || "—"}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-xs">Fabric</p>
+                              <p className="font-semibold text-gray-800">{fabricLabel || "—"}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-xs">Code / SKU</p>
+                              <p className="font-mono font-semibold text-gray-800 text-xs">{v.code || "—"}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-xs">Stock</p>
+                              <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold ${stockBadge}`}>
+                                {stock === 0 ? "Out of Stock" : stock < 6 ? `Low (${stock})` : stock}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-xs">Price / piece</p>
+                              <p className="font-bold text-gray-900">{currency}{v.price || 0}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-xs">Set Price</p>
+                              <p className="font-bold text-emerald-600">{currency}{formatNumber(setPrice)}</p>
+                            </div>
+                          </div>
+
+                          {/* Sizes */}
+                          <div>
+                            <p className="text-gray-400 text-xs mb-1">Sizes in Set</p>
+                            <div className="flex gap-1 flex-wrap">
+                              {(v.sizes || []).map((s) => (
+                                <span key={s} className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold">{s}</span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Footer actions */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => { setViewProduct(null); setEditProduct(deepClone(viewProduct)); }}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-2xl font-bold"
+                  >
+                    Edit This Product
+                  </button>
+                  <button
+                    onClick={() => setViewProduct(null)}
+                    className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold hover:bg-gray-200 transition"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -292,37 +443,49 @@ const List = ({ token }) => {
                   </h3>
 
                   <div className="space-y-4">
-                    <input
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
-                      value={editProduct.name}
-                      onChange={(e) => updateBasic("name", e.target.value)}
-                      placeholder="Product Name"
-                    />
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Product Name</label>
+                      <input
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition"
+                        value={editProduct.name}
+                        onChange={(e) => updateBasic("name", e.target.value)}
+                        placeholder="Product Name"
+                      />
+                    </div>
 
-                    <textarea
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none min-h-[100px] resize-none"
-                      value={editProduct.description}
-                      onChange={(e) =>
-                        updateBasic("description", e.target.value)
-                      }
-                      placeholder="Description"
-                    />
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                      <textarea
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none min-h-[100px] resize-none focus:border-blue-500 transition"
+                        value={editProduct.description}
+                        onChange={(e) =>
+                          updateBasic("description", e.target.value)
+                        }
+                        placeholder="Description"
+                      />
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <input
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
-                        value={editProduct.category}
-                        onChange={(e) => updateBasic("category", e.target.value)}
-                        placeholder="Category"
-                      />
-                      <input
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
-                        value={editProduct.subCategory}
-                        onChange={(e) =>
-                          updateBasic("subCategory", e.target.value)
-                        }
-                        placeholder="Sub Category"
-                      />
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+                        <input
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition"
+                          value={editProduct.category}
+                          onChange={(e) => updateBasic("category", e.target.value)}
+                          placeholder="Category"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Sub Category</label>
+                        <input
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition"
+                          value={editProduct.subCategory}
+                          onChange={(e) =>
+                            updateBasic("subCategory", e.target.value)
+                          }
+                          placeholder="Sub Category"
+                        />
+                      </div>
                     </div>
 
                     <label className="flex items-center gap-3 cursor-pointer">
@@ -372,59 +535,73 @@ const List = ({ token }) => {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <input
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
-                          value={v.color}
-                          onChange={(e) =>
-                            updateVariantField(vIndex, "color", e.target.value)
-                          }
-                          placeholder="Color"
-                        />
-                        <input
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
-                          value={v.type}
-                          onChange={(e) =>
-                            updateVariantField(vIndex, "type", e.target.value)
-                          }
-                          placeholder="Type / Material"
-                        />
-                        <input
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
-                          value={v.code || ""}
-                          onChange={(e) =>
-                            updateVariantField(vIndex, "code", e.target.value)
-                          }
-                          placeholder="Variant Code"
-                        />
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Color</label>
+                          <input
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition"
+                            value={v.color}
+                            onChange={(e) =>
+                              updateVariantField(vIndex, "color", e.target.value)
+                            }
+                            placeholder="e.g. Red, Blue"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Fabric / Material</label>
+                          <input
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition"
+                            value={v.fabric || v.type || ""}
+                            onChange={(e) =>
+                              updateVariantField(vIndex, "fabric", e.target.value)
+                            }
+                            placeholder="e.g. Cotton, Silk"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Variant Code</label>
+                          <input
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition"
+                            value={v.code || ""}
+                            onChange={(e) =>
+                              updateVariantField(vIndex, "code", e.target.value)
+                            }
+                            placeholder="SKU or code"
+                          />
+                        </div>
                       </div>
 
-                      {/* ✅ Variant Price & Stock */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <input
-                          type="number"
-                          min="1"
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
-                          value={v.price}
-                          onChange={(e) =>
-                            updateVariantField(vIndex, "price", e.target.value)
-                          }
-                          placeholder="Variant Price (per-piece)"
-                        />
-                        {v.price && v.sizes?.length > 0 && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Set price: ₹{formatNumber(Number(v.price) * v.sizes.length)}
-                          </p>
-                        )}
-                        <input
-                          type="number"
-                          min="0"
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none"
-                          value={v.stock}
-                          onChange={(e) =>
-                            updateVariantField(vIndex, "stock", e.target.value)
-                          }
-                          placeholder="Variant Stock"
-                        />
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Price (per-piece)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition"
+                            value={v.price}
+                            onChange={(e) =>
+                              updateVariantField(vIndex, "price", e.target.value)
+                            }
+                            placeholder="Enter price"
+                          />
+                          {v.price && v.sizes?.length > 0 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Set price: ₹{formatNumber(Number(v.price) * v.sizes.length)}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-1">Stock</label>
+                          <input
+                            type="number"
+                            min="0"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition"
+                            value={v.stock}
+                            onChange={(e) =>
+                              updateVariantField(vIndex, "stock", e.target.value)
+                            }
+                            placeholder="Enter stock"
+                          />
+                        </div>
                       </div>
 
                       {/* Images */}
@@ -454,11 +631,10 @@ const List = ({ token }) => {
                                 key={size}
                                 type="button"
                                 onClick={() => toggleSize(vIndex, size)}
-                                className={`py-2 rounded-xl font-bold border-2 transition-all ${
-                                  selected
-                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent"
-                                    : "bg-white border-gray-300 text-gray-600 hover:border-purple-400"
-                                }`}
+                                className={`py-2 rounded-xl font-bold border-2 transition-all ${selected
+                                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent"
+                                  : "bg-white border-gray-300 text-gray-600 hover:border-purple-400"
+                                  }`}
                               >
                                 {size}
                               </button>

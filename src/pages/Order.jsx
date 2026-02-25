@@ -128,7 +128,7 @@ const Order = ({ token }) => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const filename = `invoice-${(orders.find(o=>o._id===orderId)?.orderNumber) || orderId}.pdf`;
+      const filename = `invoice-${(orders.find(o => o._id === orderId)?.orderNumber) || orderId}.pdf`;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
@@ -216,11 +216,10 @@ const Order = ({ token }) => {
             <button
               key={status}
               onClick={() => setActiveStatus(status)}
-              className={`px-5 md:px-8 py-3 rounded-2xl font-bold border-2 transition-all transform hover:scale-105 ${
-                activeStatus === status
+              className={`px-5 md:px-8 py-3 rounded-2xl font-bold border-2 transition-all transform hover:scale-105 ${activeStatus === status
                   ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl border-transparent"
                   : "bg-white text-gray-700 border-gray-200 hover:border-blue-300 shadow-md"
-              }`}
+                }`}
             >
               {status}
             </button>
@@ -325,13 +324,12 @@ const Order = ({ token }) => {
 
                         <div className="mt-3">
                           <span
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm ${
-                              order.status === "Delivered"
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm ${order.status === "Delivered"
                                 ? "bg-green-100 text-green-700"
                                 : order.status === "Cancelled"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-blue-100 text-blue-700"
-                            }`}
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-blue-100 text-blue-700"
+                              }`}
                           >
                             <span className="w-2 h-2 rounded-full bg-current"></span>
                             {order.status}
@@ -358,9 +356,8 @@ const Order = ({ token }) => {
                           Payment Status:
                         </span>
                         <span
-                          className={`font-bold ${
-                            order.payment ? "text-green-600" : "text-red-500"
-                          }`}
+                          className={`font-bold ${order.payment ? "text-green-600" : "text-red-500"
+                            }`}
                         >
                           {order.payment ? "✓ Paid" : "✗ Unpaid"}
                         </span>
@@ -368,12 +365,14 @@ const Order = ({ token }) => {
 
                       <button
                         disabled={paymentLocked}
-                        onClick={() => updatePayment(order._id, !order.payment)}
-                        className={`w-full py-3 rounded-xl font-semibold transition-all ${
-                          paymentLocked
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updatePayment(order._id, !order.payment);
+                        }}
+                        className={`w-full py-3 rounded-xl font-semibold transition-all ${paymentLocked
                             ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                             : "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                        }`}
+                          }`}
                       >
                         Toggle Payment
                       </button>
@@ -381,14 +380,14 @@ const Order = ({ token }) => {
                       {actions.length > 0 && (
                         <div className="flex gap-2">
                           {actions.map((a) => (
-                                <button
-                                  key={a.status}
-                                  onClick={() => updateStatus(order._id, a.status)}
-                                  disabled={statusUpdating === order._id}
-                                  className={`flex-1 ${statusUpdating === order._id ? 'opacity-60 cursor-wait' : ''} bg-gradient-to-r ${a.color} text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all`}
-                                >
-                                  {statusUpdating === order._id ? 'Please wait...' : a.label}
-                                </button>
+                            <button
+                              key={a.status}
+                              onClick={() => updateStatus(order._id, a.status)}
+                              disabled={statusUpdating === order._id}
+                              className={`flex-1 ${statusUpdating === order._id ? 'opacity-60 cursor-wait' : ''} bg-gradient-to-r ${a.color} text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all`}
+                            >
+                              {statusUpdating === order._id ? 'Please wait...' : a.label}
+                            </button>
                           ))}
                         </div>
                       )}
@@ -501,9 +500,8 @@ const Order = ({ token }) => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Payment:</span>
                       <span
-                        className={`font-semibold ${
-                          selectedOrder.payment ? "text-green-600" : "text-red-600"
-                        }`}
+                        className={`font-semibold ${selectedOrder.payment ? "text-green-600" : "text-red-600"
+                          }`}
                       >
                         {selectedOrder.payment ? "Paid" : "Unpaid"}
                       </span>
