@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { backendUrl, currency } from "../constants";
 import { toast } from "react-toastify";
@@ -13,6 +13,11 @@ const List = ({ token }) => {
   const [products, setProducts] = useState([]);
   const [editProduct, setEditProduct] = useState(null);
   const [viewProduct, setViewProduct] = useState(null);
+  const [viewReviews, setViewReviews] = useState(false);
+  const [productReviews, setProductReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewVariantFilter, setReviewVariantFilter] = useState("all");
+  const [deletingReviewId, setDeletingReviewId] = useState(null);
 
   /* ================= FETCH ================= */
   const fetchProducts = async () => {
@@ -41,6 +46,43 @@ const List = ({ token }) => {
       fetchProducts();
     } catch (err) {
       toast.error(err.message);
+    }
+  };
+
+  /* ================= REVIEWS ================= */
+  const fetchProductReviews = async (productId) => {
+    setReviewsLoading(true);
+    setProductReviews([]);
+    setReviewVariantFilter("all");
+    try {
+      const res = await axios.get(`${backendUrl}/api/review/admin/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.success) {
+        setProductReviews(res.data.reviews || []);
+      }
+    } catch (err) {
+      toast.error("Failed to load reviews");
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async (productId, reviewId) => {
+    if (!window.confirm("Delete this review?")) return;
+    setDeletingReviewId(reviewId);
+    try {
+      const res = await axios.delete(`${backendUrl}/api/review/admin/${productId}/${reviewId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.success) {
+        toast.success("Review deleted");
+        setProductReviews((prev) => prev.filter((r) => r._id !== reviewId));
+      }
+    } catch (err) {
+      toast.error("Error deleting review");
+    } finally {
+      setDeletingReviewId(null);
     }
   };
 
@@ -387,7 +429,7 @@ const List = ({ token }) => {
                           <div>
                             <p className="text-gray-400 text-xs mb-1">Sizes in Set</p>
                             <div className="flex gap-1 flex-wrap">
-                              {(v.sizes || []).map((s) => (
+                              {(v.sizes || []).slice().sort((a, b) => SIZES.indexOf(a) - SIZES.indexOf(b)).map((s) => (
                                 <span key={s} className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold">{s}</span>
                               ))}
                             </div>
@@ -401,6 +443,12 @@ const List = ({ token }) => {
                 {/* Footer actions */}
                 <div className="flex gap-3 pt-2">
                   <button
+                    onClick={() => { setViewReviews(true); fetchProductReviews(viewProduct._id); }}
+                    className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white py-3 rounded-2xl font-bold hover:from-yellow-500 hover:to-orange-500 transition"
+                  >
+                    Reviews &#9733;
+                  </button>
+                  <button
                     onClick={() => { setViewProduct(null); setEditProduct(deepClone(viewProduct)); }}
                     className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-2xl font-bold"
                   >
@@ -413,6 +461,108 @@ const List = ({ token }) => {
                     Close
                   </button>
                 </div>
+
+                {/* ===== INLINE REVIEWS PANEL ===== */}
+                {viewReviews && (
+                  <div className="border-t border-gray-100 pt-5 mt-2">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold text-lg text-gray-800">Customer Reviews</h3>
+                      <button
+                        onClick={() => setViewReviews(false)}
+                        className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+                      >
+                        Hide ✕
+                      </button>
+                    </div>
+
+                    {reviewsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <div className="w-7 h-7 border-4 border-gray-200 border-t-yellow-400 rounded-full animate-spin" />
+                      </div>
+                    ) : productReviews.length === 0 ? (
+                      <div className="text-center py-8 bg-gray-50 rounded-2xl">
+                        <p className="text-3xl mb-2">&#11088;</p>
+                        <p className="text-gray-500 text-sm">No reviews yet for this product.</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Variant filter tabs */}
+                        {(() => {
+                          const variantKeys = [...new Set(productReviews.map((r) => r.variantCode || r.variantColor || "General"))];
+                          if (variantKeys.length <= 1) return null;
+                          return (
+                            <div className="flex gap-2 flex-wrap mb-4">
+                              <button
+                                onClick={() => setReviewVariantFilter("all")}
+                                className={`px-3 py-1 rounded-full text-xs font-medium transition ${reviewVariantFilter === "all" ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                              >
+                                All ({productReviews.length})
+                              </button>
+                              {variantKeys.map((vk) => (
+                                <button
+                                  key={vk}
+                                  onClick={() => setReviewVariantFilter(vk)}
+                                  className={`px-3 py-1 rounded-full text-xs font-medium transition ${reviewVariantFilter === vk ? "bg-yellow-400 text-white" : "bg-yellow-50 text-yellow-700 hover:bg-yellow-100"}`}
+                                >
+                                  {vk} ({productReviews.filter((r) => (r.variantCode || r.variantColor || "General") === vk).length})
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Review cards */}
+                        <div className="space-y-3">
+                          {productReviews
+                            .filter((r) => reviewVariantFilter === "all" || (r.variantCode || r.variantColor || "General") === reviewVariantFilter)
+                            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                            .map((review) => (
+                              <div key={review._id} className="bg-gray-50 rounded-xl p-4 flex gap-3">
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm">
+                                  {(review.userName || "A")[0].toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                      <p className="font-semibold text-sm text-gray-800">{review.userName || "Anonymous"}</p>
+                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                        <div className="flex gap-0.5">
+                                          {[1, 2, 3, 4, 5].map((s) => (
+                                            <span key={s} className={`text-sm ${s <= review.rating ? "text-yellow-400" : "text-gray-200"}`}>&#9733;</span>
+                                          ))}
+                                        </div>
+                                        {(review.variantColor || review.variantCode) && (
+                                          <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">
+                                            {review.variantColor}{review.variantCode ? ` (${review.variantCode})` : ""}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      <span className="text-xs text-gray-400">
+                                        {new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                      </span>
+                                      <button
+                                        onClick={() => handleDeleteReview(viewProduct._id, review._id)}
+                                        disabled={deletingReviewId === review._id}
+                                        className="text-xs text-red-400 hover:text-red-600 border border-red-100 hover:border-red-300 px-2 py-0.5 rounded-full transition disabled:opacity-50"
+                                      >
+                                        {deletingReviewId === review._id ? "..." : "Delete"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                  {review.comment && (
+                                    <p className="text-gray-600 text-sm mt-1.5 leading-relaxed">{review.comment}</p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
               </div>
             </div>
           </div>

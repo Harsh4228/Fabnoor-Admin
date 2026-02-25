@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import { backendUrl, currency } from "../constants";
 import { toast } from "react-toastify";
 import { assets } from "../assets/assets";
+import html2pdf from "html2pdf.js";
 
 /* ================= CONFIG ================= */
 const STATUS_TABS = [
@@ -119,26 +120,49 @@ const Order = ({ token }) => {
   /* ================= DOWNLOAD INVOICE (ADMIN) ================= */
   const downloadInvoice = async (orderId) => {
     try {
-      const res = await axios.get(`${backendUrl}/api/order/invoice/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      });
+      const element = document.getElementById("order-invoice-content");
+      if (!element) {
+        toast.error("Could not find invoice layout.");
+        return;
+      }
 
-      const blob = new Blob([res.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const filename = `invoice-${(orders.find(o => o._id === orderId)?.orderNumber) || orderId}.pdf`;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      // Temporarily hide the utility buttons (close, download) for the PDF
+      const actionButtons = document.getElementById("order-invoice-actions");
+      if (actionButtons) actionButtons.style.display = "none";
+
+      // Fix for PDF clipping: temporarily remove max height and scroll 
+      const originalMaxHeight = element.style.maxHeight;
+      const originalOverflow = element.style.overflow;
+      element.style.maxHeight = 'none';
+      element.style.overflow = 'visible';
+
+      const opt = {
+        margin: 0.5,
+        filename: `invoice-${(orders.find(o => o._id === orderId)?.orderNumber) || orderId}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: element.scrollWidth, windowHeight: element.scrollHeight },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      await html2pdf().set(opt).from(element).save();
+
+      // Restore action buttons and styles
+      if (actionButtons) actionButtons.style.display = "flex";
+      element.style.maxHeight = originalMaxHeight;
+      element.style.overflow = originalOverflow;
+
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Failed to download slip");
+      toast.error(err.message || "Failed to download slip");
+      // Fallback cleanup
+      const actionButtons = document.getElementById("order-invoice-actions");
+      if (actionButtons) actionButtons.style.display = "flex";
+      const element = document.getElementById("order-invoice-content");
+      if (element) {
+        element.style.maxHeight = '';
+        element.style.overflow = '';
+      }
     }
   };
-
   /* ================= FILTER + PAGINATION ================= */
   const filteredOrders = orders.filter((order) => order.status === activeStatus);
 
@@ -217,8 +241,8 @@ const Order = ({ token }) => {
               key={status}
               onClick={() => setActiveStatus(status)}
               className={`px-5 md:px-8 py-3 rounded-2xl font-bold border-2 transition-all transform hover:scale-105 ${activeStatus === status
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl border-transparent"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-blue-300 shadow-md"
+                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl border-transparent"
+                : "bg-white text-gray-700 border-gray-200 hover:border-blue-300 shadow-md"
                 }`}
             >
               {status}
@@ -325,10 +349,10 @@ const Order = ({ token }) => {
                         <div className="mt-3">
                           <span
                             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm ${order.status === "Delivered"
-                                ? "bg-green-100 text-green-700"
-                                : order.status === "Cancelled"
-                                  ? "bg-red-100 text-red-700"
-                                  : "bg-blue-100 text-blue-700"
+                              ? "bg-green-100 text-green-700"
+                              : order.status === "Cancelled"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-blue-100 text-blue-700"
                               }`}
                           >
                             <span className="w-2 h-2 rounded-full bg-current"></span>
@@ -370,8 +394,8 @@ const Order = ({ token }) => {
                           updatePayment(order._id, !order.payment);
                         }}
                         className={`w-full py-3 rounded-xl font-semibold transition-all ${paymentLocked
-                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                            : "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                          : "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                           }`}
                       >
                         Toggle Payment
@@ -422,10 +446,10 @@ const Order = ({ token }) => {
           </div>
         )}
 
-        {/* ================= ORDER DETAIL MODAL ================= */}
+        {/* --- ORDER DETAILS MODAL --- */}
         {selectedOrder && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-            <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl max-h-[95vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all duration-300">
+            <div id="order-invoice-content" className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl relative transform transition-all duration-300 scale-100">
               {/* Modal Header */}
               <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-3xl z-10 shadow-lg">
                 <div className="flex justify-between items-center">
@@ -438,7 +462,7 @@ const Order = ({ token }) => {
                       Customer: {selectedOrder.userId?.name || selectedOrder?.address?.fullName || "Customer"} • {selectedOrder.userId?.email || "-"}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div id="order-invoice-actions" className="flex items-center gap-3">
                     <button
                       onClick={(e) => { e.stopPropagation(); downloadInvoice(selectedOrder._id); }}
                       className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-md text-sm"
@@ -522,22 +546,38 @@ const Order = ({ token }) => {
                   </div>
                 </div>
 
-                {/* ADDRESS */}
-                <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100">
-                  <h4 className="font-bold text-lg mb-3 text-gray-800">
-                    Shipping Address
-                  </h4>
-                  <div className="text-sm space-y-1 text-gray-700">
-                    <p>{selectedOrder?.address?.addressLine || "N/A"}</p>
-                    <p>
-                      {selectedOrder?.address?.city || ""},{" "}
-                      {selectedOrder?.address?.state || ""}
-                    </p>
-                    <p>
-                      {selectedOrder?.address?.country || ""} -{" "}
-                      {selectedOrder?.address?.pincode || ""}
-                    </p>
-                    <p>Phone: {selectedOrder?.address?.phone || "N/A"}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* CUSTOMER DETAILS */}
+                  <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
+                    <h4 className="font-bold text-lg mb-3 text-gray-800">
+                      Customer Details
+                    </h4>
+                    <div className="text-sm space-y-2 text-gray-700">
+                      <p><span className="font-semibold text-indigo-900">Name:</span> {selectedOrder?.userId?.name || selectedOrder?.address?.fullName || "Guest"}</p>
+                      <p><span className="font-semibold text-indigo-900">Email:</span> {selectedOrder?.userId?.email || "N/A"}</p>
+                      <p><span className="font-semibold text-indigo-900">Phone:</span> {selectedOrder?.address?.phone || "N/A"}</p>
+                      <p><span className="font-semibold text-indigo-900">Payment ID:</span> {selectedOrder?.paymentId || "N/A"}</p>
+                      <p><span className="font-semibold text-indigo-900">User ID:</span> {selectedOrder?.userId?._id || selectedOrder?.userId || "Guest"}</p>
+                    </div>
+                  </div>
+
+                  {/* ADDRESS */}
+                  <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100">
+                    <h4 className="font-bold text-lg mb-3 text-gray-800">
+                      Shipping Address
+                    </h4>
+                    <div className="text-sm space-y-1 text-gray-700">
+                      <p>{selectedOrder?.address?.addressLine || "N/A"}</p>
+                      <p>
+                        {selectedOrder?.address?.city || ""},{" "}
+                        {selectedOrder?.address?.state || ""}
+                      </p>
+                      <p>
+                        {selectedOrder?.address?.country || ""} -{" "}
+                        {selectedOrder?.address?.pincode || ""}
+                      </p>
+                      <p className="mt-2 font-medium text-orange-900">Contact: {selectedOrder?.address?.phone || "N/A"}</p>
+                    </div>
                   </div>
                 </div>
 

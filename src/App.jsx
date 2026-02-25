@@ -12,19 +12,19 @@ import ReelsAdmin from "./pages/ReelsAdmin";
 
 const App = () => {
 
-  const [token, setToken] = useState(localStorage.getItem('token')? localStorage.getItem('token') : "");
+  const [token, setToken] = useState(localStorage.getItem('token') ? localStorage.getItem('token') : "");
 
-  useEffect(()=>{
+  useEffect(() => {
     localStorage.setItem('token', token);
-  },[token])
-    
-  
+  }, [token])
+
+
   return (
     <div className="bg-gray-50 min-h-screen">
       <ToastContainer />
-      {token === "" 
-      ? <Login setToken={setToken} />
-       :  <>
+      {token === ""
+        ? <Login setToken={setToken} />
+        : <>
           <Navbar setToken={setToken} />
           <hr />
           <div className="flex w-full">
@@ -34,8 +34,8 @@ const App = () => {
                 <Route path="/add" element={<Add token={token} />} />
                 <Route path="/list" element={<List token={token} />} />
                 <Route path="/orders" element={<Orders token={token} />} />
-                 <Route path="/reels" element={<ReelsAdmin token={token} />} />
-                <Route path="*" element={<List token={token}/>} />
+                <Route path="/reels" element={<ReelsAdmin token={token} />} />
+                <Route path="*" element={<List token={token} />} />
               </Routes>
             </div>
           </div>
