@@ -24,7 +24,7 @@ const Add = ({ token }) => {
   const addVariant = () => {
     setVariants((prev) => [
       ...prev,
-      { color: "", fabric: "", code: "", images: [], sizes: [], price: "", stock: "" },
+      { color: "", fabric: "", code: "", images: [], sizes: [], price: "", stock: "", allowedSizeCount: "" },
     ]);
   };
 
@@ -43,14 +43,32 @@ const Add = ({ token }) => {
   // ✅ sizes are now strings only
   const toggleSize = (vIndex, size) => {
     const updated = [...variants];
-    const sizes = updated[vIndex].sizes;
+    const variant = updated[vIndex];
+    let sizes = [...variant.sizes];
 
     if (sizes.includes(size)) {
-      updated[vIndex].sizes = sizes.filter((s) => s !== size);
+      sizes = sizes.filter((s) => s !== size);
+      // If we deselect a size and it was previously "All", downgrade it to the exact number
+      if (variant.allowedSizeCount === "All") {
+        variant.allowedSizeCount = sizes.length.toString();
+      }
     } else {
-      updated[vIndex].sizes = [...sizes, size];
+      const allowed = variant.allowedSizeCount;
+      if (!allowed) {
+        toast.info("Please select 'Number of Sizes' first.");
+        return;
+      }
+      if (allowed !== "All" && sizes.length >= Number(allowed)) {
+        toast.warning(`You can only select up to ${allowed} size(s).`);
+        return;
+      }
+      sizes.push(size);
+      if (sizes.length === SIZES.length) {
+        variant.allowedSizeCount = "All";
+      }
     }
 
+    variant.sizes = sizes;
     setVariants(updated);
   };
 
@@ -87,8 +105,18 @@ const Add = ({ token }) => {
         return false;
       }
 
-      if (!v.sizes.length) {
-        toast.error(`Select at least one size for ${v.color}`);
+      if (!v.allowedSizeCount) {
+        toast.error(`Please specify the 'Number of Sizes' for ${v.color || "the variant"}`);
+        return false;
+      }
+
+      if (v.allowedSizeCount === "All" && v.sizes.length !== SIZES.length) {
+        toast.error(`You selected 'All' sizes for ${v.color} but some are missing.`);
+        return false;
+      }
+
+      if (v.allowedSizeCount !== "All" && v.sizes.length !== Number(v.allowedSizeCount)) {
+        toast.error(`You must select exactly ${v.allowedSizeCount} size(s) for ${v.color}`);
         return false;
       }
 
@@ -401,9 +429,44 @@ const Add = ({ token }) => {
 
                       {/* Sizes */}
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">
-                          Available Sizes
-                        </label>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4">
+                          <label className="block text-sm font-semibold text-gray-700">
+                            Available Sizes
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                              Number of Sizes:
+                            </label>
+                            <select
+                              value={variant.allowedSizeCount || ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const updated = [...variants];
+                                updated[vIndex].allowedSizeCount = val;
+
+                                if (val === "All") {
+                                  updated[vIndex].sizes = [...SIZES];
+                                } else if (val) {
+                                  // Trim sizes if they currently exceed the new limit
+                                  const currentSizes = updated[vIndex].sizes;
+                                  if (currentSizes.length > Number(val)) {
+                                    updated[vIndex].sizes = currentSizes.slice(0, Number(val));
+                                  }
+                                } else {
+                                  updated[vIndex].sizes = [];
+                                }
+                                setVariants(updated);
+                              }}
+                              className="px-3 py-2 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all bg-white"
+                            >
+                              <option value="">Select...</option>
+                              {[...Array(SIZES.length).keys()].map(i => (
+                                <option key={i + 1} value={i + 1}>{i + 1}</option>
+                              ))}
+                              <option value="All">All ({SIZES.length})</option>
+                            </select>
+                          </div>
+                        </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                           {SIZES.map((size) => {
@@ -415,8 +478,8 @@ const Add = ({ token }) => {
                                 type="button"
                                 onClick={() => toggleSize(vIndex, size)}
                                 className={`py-2 rounded-xl font-bold transition-all border-2 ${selected
-                                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent shadow-md"
-                                    : "bg-white border-gray-300 text-gray-600 hover:border-purple-400"
+                                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent shadow-md"
+                                  : "bg-white border-gray-300 text-gray-600 hover:border-purple-400"
                                   }`}
                               >
                                 {size}
