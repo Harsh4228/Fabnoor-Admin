@@ -104,6 +104,19 @@ const Sidebar = () => {
             <img className="w-6 h-6 group-hover:scale-110 transition-transform" src={assets.reel_icon} alt="Reels" />
             <p className="font-semibold">ReelsAdmin</p>
           </NavLink>
+          <NavLink
+            className={({ isActive }) =>
+              `flex items-center gap-4 border border-gray-200 px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
+                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
+                : 'hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+              }`
+            }
+            to="/users"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <img className="w-6 h-6 group-hover:scale-110 transition-transform" src={assets.profile_icon || assets.order_icon} alt="Users" />
+            <p className="font-semibold">Users</p>
+          </NavLink>
         </div>
       </div>
 
@@ -181,6 +194,22 @@ const Sidebar = () => {
               alt="Reels"
             />
             <p className="hidden lg:block font-semibold relative z-10">ReelsAdmin</p>
+          </NavLink>
+          <NavLink
+            className={({ isActive }) =>
+              `flex items-center gap-3 border border-gray-300 border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
+                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
+                : 'hover:bg-gray-50 hover:border-gray-400 hover:shadow-md hover:pl-5'
+              }`
+            }
+            to="/users"
+          >
+            <img
+              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10"
+              src={assets.profile_icon || assets.order_icon}
+              alt="Users"
+            />
+            <p className="hidden lg:block font-semibold relative z-10">Users</p>
           </NavLink>
         </div>
       </div>

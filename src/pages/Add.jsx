@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { backendUrl } from "../constants";
 import { toast } from "react-toastify";
@@ -15,6 +15,29 @@ const Add = ({ token }) => {
   const [category, setCategory] = useState("");
   const [subCategory, setSubCategory] = useState("");
   const [bestseller, setBestseller] = useState(false);
+
+  // Auto-complete data
+  const [existingCategories, setExistingCategories] = useState([]);
+  const [existingSubCategories, setExistingSubCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(`${backendUrl}/api/product/list`);
+        if (res.data.success) {
+          const products = res.data.products || [];
+          // Extract unique categories and subcategories
+          const uniqueCategories = [...new Set(products.map((p) => p.category).filter(Boolean))];
+          const uniqueSubCategories = [...new Set(products.map((p) => p.subCategory).filter(Boolean))];
+          setExistingCategories(uniqueCategories);
+          setExistingSubCategories(uniqueSubCategories);
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   // ✅ Wholesale variants: price & stock at variant level
   const [variants, setVariants] = useState([]);
@@ -257,24 +280,36 @@ const Add = ({ token }) => {
                       Category
                     </label>
                     <input
+                      list="categories-list"
                       placeholder="e.g., Men, Women, Kids"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
                       required
                     />
+                    <datalist id="categories-list">
+                      {existingCategories.map((c, i) => (
+                        <option key={i} value={c} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Sub Category
                     </label>
                     <input
+                      list="subcategories-list"
                       placeholder="e.g., Topwear, Bottomwear"
                       value={subCategory}
                       onChange={(e) => setSubCategory(e.target.value)}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
                       required
                     />
+                    <datalist id="subcategories-list">
+                      {existingSubCategories.map((sc, i) => (
+                        <option key={i} value={sc} />
+                      ))}
+                    </datalist>
                   </div>
                 </div>
               </div>

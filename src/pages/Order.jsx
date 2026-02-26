@@ -22,6 +22,26 @@ const Order = ({ token }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [statusUpdating, setStatusUpdating] = useState(null);
   const [showRaw, setShowRaw] = useState(false);
+  const [adminProfile, setAdminProfile] = useState(null); // ✅ hold admin profile for return address
+
+  /* ================= FETCH ADMIN PROFILE ================= */
+  const fetchAdminProfile = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await axios.get(`${backendUrl}/api/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        setAdminProfile(res.data.user);
+      }
+    } catch (error) {
+      console.error("Failed to fetch admin profile for shipping slip:", error);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchAdminProfile();
+  }, [fetchAdminProfile]);
 
   /* ================= FETCH ORDERS ================= */
   const fetchOrders = useCallback(async () => {
@@ -117,49 +137,37 @@ const Order = ({ token }) => {
     }
   };
 
-  /* ================= DOWNLOAD INVOICE (ADMIN) ================= */
+  /* ================= DOWNLOAD SHIPPING SLIP (WAYBILL) ================= */
   const downloadInvoice = async (orderId) => {
     try {
-      const element = document.getElementById("order-invoice-content");
+      const element = document.getElementById("shipping-slip-content");
       if (!element) {
-        toast.error("Could not find invoice layout.");
+        toast.error("Could not find shipping slip layout.");
         return;
       }
 
-      // Temporarily hide the utility buttons (close, download) for the PDF
-      const actionButtons = document.getElementById("order-invoice-actions");
-      if (actionButtons) actionButtons.style.display = "none";
-
-      // Fix for PDF clipping: temporarily remove max height and scroll 
-      const originalMaxHeight = element.style.maxHeight;
-      const originalOverflow = element.style.overflow;
-      element.style.maxHeight = 'none';
-      element.style.overflow = 'visible';
+      // Temporarily reveal it to take the snapshot
+      element.style.display = "block";
 
       const opt = {
-        margin: 0.5,
-        filename: `invoice-${(orders.find(o => o._id === orderId)?.orderNumber) || orderId}.pdf`,
+        margin: 0.2, // smaller margins for waybill
+        filename: `shipping-slip-${(orders.find(o => o._id === orderId)?.orderNumber) || orderId}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: element.scrollWidth, windowHeight: element.scrollHeight },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        html2canvas: { scale: 2, useCORS: true },
+        // Use A5 landscape or a custom thermal label size. A5 landscape is close to 4x6 labels but printable on A4.
+        jsPDF: { unit: 'in', format: 'a5', orientation: 'landscape' }
       };
 
       await html2pdf().set(opt).from(element).save();
 
-      // Restore action buttons and styles
-      if (actionButtons) actionButtons.style.display = "flex";
-      element.style.maxHeight = originalMaxHeight;
-      element.style.overflow = originalOverflow;
+      // Hide it again
+      element.style.display = "none";
 
     } catch (err) {
       toast.error(err.message || "Failed to download slip");
-      // Fallback cleanup
-      const actionButtons = document.getElementById("order-invoice-actions");
-      if (actionButtons) actionButtons.style.display = "flex";
-      const element = document.getElementById("order-invoice-content");
+      const element = document.getElementById("shipping-slip-content");
       if (element) {
-        element.style.maxHeight = '';
-        element.style.overflow = '';
+        element.style.display = "none";
       }
     }
   };
@@ -550,23 +558,41 @@ const Order = ({ token }) => {
                   {/* CUSTOMER DETAILS */}
                   <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
                     <h4 className="font-bold text-lg mb-3 text-gray-800">
-                      Customer Details
+                      Customer Profile
                     </h4>
                     <div className="text-sm space-y-2 text-gray-700">
                       <p><span className="font-semibold text-indigo-900">Name:</span> {selectedOrder?.userId?.name || selectedOrder?.address?.fullName || "Guest"}</p>
                       <p><span className="font-semibold text-indigo-900">Email:</span> {selectedOrder?.userId?.email || "N/A"}</p>
-                      <p><span className="font-semibold text-indigo-900">Phone:</span> {selectedOrder?.address?.phone || "N/A"}</p>
-                      <p><span className="font-semibold text-indigo-900">Payment ID:</span> {selectedOrder?.paymentId || "N/A"}</p>
-                      <p><span className="font-semibold text-indigo-900">User ID:</span> {selectedOrder?.userId?._id || selectedOrder?.userId || "Guest"}</p>
+                      <p><span className="font-semibold text-indigo-900">Profile Mobile:</span> {selectedOrder?.userId?.mobile || "N/A"}</p>
+                      {selectedOrder?.userId?.shopName && (
+                        <p><span className="font-semibold text-indigo-900">Shop Name:</span> {selectedOrder.userId.shopName}</p>
+                      )}
+                      {selectedOrder?.userId?.dob && (
+                        <p><span className="font-semibold text-indigo-900">DOB:</span> {selectedOrder.userId.dob}</p>
+                      )}
+                      {selectedOrder?.userId?.gender && (
+                        <p><span className="font-semibold text-indigo-900">Gender:</span> {selectedOrder.userId.gender}</p>
+                      )}
+
+                      {/* Show saved profile address if we populated it via userId */}
+                      {selectedOrder?.userId?.address?.city && (
+                        <div className="mt-3 bg-white/50 p-3 rounded border border-indigo-100/50">
+                          <p className="font-semibold text-indigo-900 text-xs uppercase tracking-wide mb-1">Saved User Address:</p>
+                          <p className="text-xs">{selectedOrder.userId.address.street}</p>
+                          <p className="text-xs">{selectedOrder.userId.address.city}, {selectedOrder.userId.address.state}</p>
+                          <p className="text-xs">{selectedOrder.userId.address.country} - {selectedOrder.userId.address.zipcode}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* ADDRESS */}
+                  {/* SHIPPING ADDRESS */}
                   <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100">
                     <h4 className="font-bold text-lg mb-3 text-gray-800">
-                      Shipping Address
+                      Shipping Address For This Order
                     </h4>
                     <div className="text-sm space-y-1 text-gray-700">
+                      <p className="font-semibold text-orange-900 mb-1">{selectedOrder?.address?.fullName || "N/A"}</p>
                       <p>{selectedOrder?.address?.addressLine || "N/A"}</p>
                       <p>
                         {selectedOrder?.address?.city || ""},{" "}
@@ -651,6 +677,121 @@ const Order = ({ token }) => {
             </div>
           </div>
         )}
+        {/* ================= HIDDEN SHIPPING SLIP (WAYBILL) FOR PDF ================= */}
+        {selectedOrder && (
+          <div style={{ display: "none" }}>
+            {/* The scale and fixed width helps html2pdf render a consistent thermal label shape regardless of responsive screen sizes. w-[800px] was causing overflow, changed to w-[700px] or max-w-full */}
+            <div id="shipping-slip-content" className="bg-white p-6 m-0 w-[750px] text-black font-sans box-border" style={{ letterSpacing: "0.5px" }}>
+
+              {/* BRANDING / HEADER ZONE */}
+              <div className="flex justify-between items-start border-b-2 border-black pb-4 mb-4">
+                <div className="w-1/2">
+                  <h1 className="text-3xl font-black uppercase tracking-tighter">FABNOOR</h1>
+                  <p className="text-sm font-bold tracking-widest uppercase mt-1">Shipping Waybill</p>
+                </div>
+                <div className="w-1/2 text-right flex flex-col items-end">
+                  {/* Fake Barcode */}
+                  <div className="font-mono text-2xl md:text-3xl lg:text-4xl tracking-widest mt-1 mb-2 text-black px-2 py-2 border-t-4 border-b-4 border-black w-full text-center" style={{ wordBreak: 'break-all', lineHeight: '1.2' }}>
+                    *{selectedOrder.orderNumber || selectedOrder._id.toString().slice(-6)}*
+                  </div>
+                  <p className="font-bold text-sm">Order: {selectedOrder.orderNumber || selectedOrder._id}</p>
+                  <p className="text-xs text-gray-600">Date: {getOrderDate(selectedOrder).split(',')[0]}</p>
+                </div>
+              </div>
+
+              {/* PAYMENT & ROUTING ZONE */}
+              <div className="flex bg-gray-100 border border-black mb-4">
+                <div className="flex-1 p-3 text-center border-r border-black">
+                  <p className="text-xs uppercase font-bold text-gray-500 mb-1">Payment Method</p>
+                  <p className="text-lg font-black uppercase">{selectedOrder.paymentMethod}</p>
+                </div>
+                <div className="flex-1 p-3 text-center flex items-center justify-center">
+                  <p className="text-sm font-bold uppercase tracking-widest">NO CASH TO BE COLLECTED</p>
+                </div>
+              </div>
+
+              {/* ADDRESS ZONE (TO & FROM) */}
+              <div className="grid grid-cols-2 gap-6 mb-6">
+
+                {/* SHIP TO */}
+                <div className="border border-black p-4 relative">
+                  <div className="absolute -top-3 left-3 bg-white px-2 text-xs font-black uppercase">Deliver To</div>
+                  <p className="font-black text-lg mb-2">{selectedOrder.address?.fullName || "Customer"}</p>
+                  <div className="text-sm font-medium leading-relaxed">
+                    <p>{selectedOrder.address?.addressLine || ""}</p>
+                    <p>{selectedOrder.address?.city || ""}, {selectedOrder.address?.state || ""}</p>
+                    <p className="font-bold text-base mt-1">{selectedOrder.address?.country || ""} - {selectedOrder.address?.pincode || ""}</p>
+                    <p className="mt-3 font-bold border-t border-gray-300 pt-2">Phone: {selectedOrder.address?.phone || "N/A"}</p>
+                  </div>
+                </div>
+
+                {/* RETURN TO */}
+                <div className="border border-black p-4 relative bg-gray-50">
+                  <div className="absolute -top-3 left-3 bg-gray-50 px-2 text-xs font-bold uppercase text-gray-600">Return Address (If Undelivered)</div>
+
+                  {adminProfile?.shopName ? (
+                    <p className="font-black text-md mb-2">{adminProfile.shopName}</p>
+                  ) : (
+                    <p className="font-black text-md mb-2">FABNOOR RETURNS</p>
+                  )}
+
+                  <div className="text-sm text-gray-700 leading-relaxed">
+                    {adminProfile?.name && <p>Attn: {adminProfile.name}</p>}
+
+                    {adminProfile?.address?.street ? (
+                      <>
+                        <p>{adminProfile.address.street}</p>
+                        <p>{adminProfile.address.city}, {adminProfile.address.state}</p>
+                        <p>{adminProfile.address.country} - {adminProfile.address.zipcode}</p>
+                      </>
+                    ) : (
+                      <p className="italic text-gray-500 mt-2">No return address configured in admin profile.</p>
+                    )}
+
+                    {adminProfile?.mobile && (
+                      <p className="mt-2 font-semibold">Phone: {adminProfile.mobile}</p>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* PRODUCT DETAILS (NO PRICES) */}
+              <div className="border-t-2 border-dashed border-gray-400 pt-4 mt-4">
+                <p className="text-xs uppercase font-bold text-gray-500 mb-2 tracking-widest">Contents Declaration</p>
+                <table className="w-full text-sm text-left border border-gray-300">
+                  <thead className="bg-gray-100 border-b border-gray-300 uppercase text-xs">
+                    <tr>
+                      <th className="p-2 border-r border-gray-300 w-12 text-center">Qty</th>
+                      <th className="p-2 border-r border-gray-300">Item Description</th>
+                      <th className="p-2 border-r border-gray-300 w-24">SKU / Code</th>
+                      <th className="p-2 w-32">Variant</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(selectedOrder?.items || []).map((item, idx) => (
+                      <tr key={idx} className="border-b border-gray-200">
+                        <td className="p-2 border-r border-gray-300 text-center font-bold text-lg">{item.quantity}</td>
+                        <td className="p-2 border-r border-gray-300 font-semibold">{item.name}</td>
+                        <td className="p-2 border-r border-gray-300 font-mono text-xs">{item.code || "N/A"}</td>
+                        <td className="p-2 text-xs">
+                          <div>{item.color ? `Color: ${item.color}` : ''}</div>
+                          <div>{item.size ? `Size: ${item.size}` : ''}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-8 text-center text-xs text-gray-400 uppercase font-semibold">
+                This is a computer-generated document. No signature is required.
+              </div>
+
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
