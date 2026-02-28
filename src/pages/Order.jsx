@@ -154,8 +154,8 @@ const Order = ({ token }) => {
         filename: `shipping-slip-${(orders.find(o => o._id === orderId)?.orderNumber) || orderId}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        // Use A5 landscape or a custom thermal label size. A5 landscape is close to 4x6 labels but printable on A4.
-        jsPDF: { unit: 'in', format: 'a5', orientation: 'landscape' }
+        // Use A4 portrait to ensure the entire tabular invoice fits gracefully on a single page
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
       };
 
       await html2pdf().set(opt).from(element).save();
