@@ -83,6 +83,30 @@ const Users = ({ token }) => {
         return products.find(p => p._id === productId);
     };
 
+    /* ================= DELETE USER ================= */
+    const handleDeleteUser = async (userId, userName) => {
+        if (!window.confirm(`Are you sure you want to delete user ${userName}? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const res = await axios.post(`${backendUrl}/api/user/admin/delete-user`,
+                { id: userId },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                toast.success(res.data.message || "User deleted successfully");
+                setSelectedUser(null);
+                fetchData(); // Refresh list
+            } else {
+                toast.error(res.data.message || "Failed to delete user");
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Error deleting user");
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
             <div className="max-w-7xl mx-auto">
@@ -166,7 +190,7 @@ const Users = ({ token }) => {
 
                 {/* ================= USER DETAILS MODAL ================= */}
                 {selectedUser && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-40 p-2 sm:p-4">
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[60] p-2 sm:p-4">
                         <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl flex flex-col max-h-[96vh]">
                             {/* Header */}
                             <div className="bg-gradient-to-r from-purple-700 to-purple-500 text-white p-6 rounded-t-3xl flex-shrink-0 relative overflow-hidden">
@@ -200,8 +224,8 @@ const Users = ({ token }) => {
                                                 key={tab.id}
                                                 onClick={() => setActiveTab(tab.id)}
                                                 className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all whitespace-nowrap ${activeTab === tab.id
-                                                        ? 'bg-white text-purple-700 shadow-md'
-                                                        : 'bg-white/10 text-white hover:bg-white/20'
+                                                    ? 'bg-white text-purple-700 shadow-md'
+                                                    : 'bg-white/10 text-white hover:bg-white/20'
                                                     }`}
                                             >
                                                 {tab.label}
@@ -247,18 +271,31 @@ const Users = ({ token }) => {
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Saved Address</h3>
-                                                    {userDetails.user.address?.street ? (
-                                                        <div className="space-y-2 text-gray-700">
-                                                            <p className="font-medium">{userDetails.user.address.street}</p>
-                                                            <p>{userDetails.user.address.city}, {userDetails.user.address.state}</p>
-                                                            <p>{userDetails.user.address.zipcode}</p>
-                                                            <p>{userDetails.user.address.country}</p>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-gray-500 italic">No address provided.</p>
-                                                    )}
+                                                <div className="flex flex-col gap-6">
+                                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Saved Address</h3>
+                                                        {userDetails.user.address?.street ? (
+                                                            <div className="space-y-2 text-gray-700">
+                                                                <p className="font-medium">{userDetails.user.address.street}</p>
+                                                                <p>{userDetails.user.address.city}, {userDetails.user.address.state}</p>
+                                                                <p>{userDetails.user.address.zipcode}</p>
+                                                                <p>{userDetails.user.address.country}</p>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-gray-500 italic">No address provided.</p>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-red-100 bg-red-50/30">
+                                                        <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-2">Danger Zone</h3>
+                                                        <p className="text-sm text-gray-600 mb-4">Deleting this user will permanently remove their account and all associated data.</p>
+                                                        <button
+                                                            onClick={() => handleDeleteUser(userDetails.user._id, userDetails.user.name)}
+                                                            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition-colors shadow-sm"
+                                                        >
+                                                            Delete User
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
@@ -282,8 +319,8 @@ const Users = ({ token }) => {
                                                                     <div className="flex items-center gap-2 mb-1">
                                                                         <span className="font-bold text-gray-900">{order.orderNumber || order._id.slice(-6).toUpperCase()}</span>
                                                                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
-                                                                                order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                                                                                    'bg-blue-100 text-blue-700'
+                                                                            order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                                                                                'bg-blue-100 text-blue-700'
                                                                             }`}>
                                                                             {order.status}
                                                                         </span>
@@ -410,7 +447,7 @@ const Users = ({ token }) => {
                 {/* ================= REUSED PRODUCT MODAL ================= */}
                 {/* We can re-use the exact same modal structure from List.jsx for displaying a product */}
                 {viewProduct && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[70] p-4">
                         <div className="bg-white max-w-4xl w-full rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto">
                             <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center">
                                 <div>
@@ -462,7 +499,7 @@ const Users = ({ token }) => {
 
                 {/* ================= ORDER DETAILS MODAL ================= */}
                 {viewOrder && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[70] p-4">
                         <div className="bg-white max-w-2xl w-full rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col">
                             <div className="sticky top-0 bg-gradient-to-r from-blue-700 to-indigo-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center">
                                 <div>

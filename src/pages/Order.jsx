@@ -680,112 +680,243 @@ const Order = ({ token }) => {
         {/* ================= HIDDEN SHIPPING SLIP (WAYBILL) FOR PDF ================= */}
         {selectedOrder && (
           <div style={{ display: "none" }}>
-            {/* The scale and fixed width helps html2pdf render a consistent thermal label shape regardless of responsive screen sizes. w-[800px] was causing overflow, changed to w-[700px] or max-w-full */}
-            <div id="shipping-slip-content" className="bg-white p-6 m-0 w-[750px] text-black font-sans box-border" style={{ letterSpacing: "0.5px" }}>
+            <div id="shipping-slip-content" className="bg-white m-0 w-[750px] text-black font-sans box-border" style={{ letterSpacing: "0.2px" }}>
 
-              {/* BRANDING / HEADER ZONE */}
-              <div className="flex justify-between items-start border-b-2 border-black pb-4 mb-4">
-                <div className="w-1/2">
-                  <h1 className="text-3xl font-black uppercase tracking-tighter">FABNOOR</h1>
-                  <p className="text-sm font-bold tracking-widest uppercase mt-1">Shipping Waybill</p>
-                </div>
-                <div className="w-1/2 text-right flex flex-col items-end">
-                  {/* Fake Barcode */}
-                  <div className="font-mono text-2xl md:text-3xl lg:text-4xl tracking-widest mt-1 mb-2 text-black px-2 py-2 border-t-4 border-b-4 border-black w-full text-center" style={{ wordBreak: 'break-all', lineHeight: '1.2' }}>
-                    *{selectedOrder.orderNumber || selectedOrder._id.toString().slice(-6)}*
+              <div className="border-[3px] border-black flex flex-col">
+
+                {/* ROW 1: ADDRESS & ROUTING */}
+                <div className="flex border-b-[3px] border-black">
+
+                  {/* LEFT: ADDRESSES */}
+                  <div className="w-[45%] flex flex-col border-r-[3px] border-black">
+                    {/* Customer Address */}
+                    <div className="p-2 pb-6 border-b border-black flex-1">
+                      <p className="text-[12px] font-bold mb-1">Customer Address</p>
+                      <p className="text-[14px] font-extrabold capitalize leading-snug">{selectedOrder?.address?.fullName || "Customer"}</p>
+                      <p className="text-[12px] leading-snug capitalize mt-1">
+                        {selectedOrder?.address?.addressLine}
+                      </p>
+                      <p className="text-[12px] leading-snug capitalize mt-1">
+                        {selectedOrder?.address?.city}, {selectedOrder?.address?.state}, {selectedOrder?.address?.pincode}
+                      </p>
+                      <p className="text-[12px] font-bold mt-2">Ph: {selectedOrder?.address?.phone}</p>
+                    </div>
+
+                    {/* Return Address */}
+                    <div className="p-2 flex-1 pb-4">
+                      <p className="text-[11px] font-bold mb-1">If undelivered, return to:</p>
+                      <p className="text-[12px] uppercase tracking-wide">{adminProfile?.shopName || "FABNOOR"}</p>
+                      <p className="text-[11px] leading-tight capitalize mt-1">
+                        {adminProfile?.address?.street || ""}
+                      </p>
+                      <p className="text-[11px] leading-tight capitalize mt-1">
+                        {adminProfile?.address?.city || ""}{adminProfile?.address?.city ? ", " : ""}{adminProfile?.address?.state || ""}{adminProfile?.address?.state ? ", " : ""}{adminProfile?.address?.zipcode || ""}
+                      </p>
+                    </div>
                   </div>
-                  <p className="font-bold text-sm">Order: {selectedOrder.orderNumber || selectedOrder._id}</p>
-                  <p className="text-xs text-gray-600">Date: {getOrderDate(selectedOrder).split(',')[0]}</p>
-                </div>
-              </div>
 
-              {/* PAYMENT & ROUTING ZONE */}
-              <div className="flex bg-gray-100 border border-black mb-4">
-                <div className="flex-1 p-3 text-center border-r border-black">
-                  <p className="text-xs uppercase font-bold text-gray-500 mb-1">Payment Method</p>
-                  <p className="text-lg font-black uppercase">{selectedOrder.paymentMethod}</p>
-                </div>
-                <div className="flex-1 p-3 text-center flex items-center justify-center">
-                  <p className="text-sm font-bold uppercase tracking-widest">NO CASH TO BE COLLECTED</p>
-                </div>
-              </div>
+                  {/* RIGHT: ROUTING & BARCODE */}
+                  <div className="w-[55%] flex flex-col">
+                    {/* Payment Header */}
+                    <div className="bg-black text-white px-3 py-1.5 text-[12px] font-bold text-left">
+                      {selectedOrder.paymentMethod === 'COD'
+                        ? 'COD: Check the payable amount on the app'
+                        : 'PREPAID'}
+                    </div>
 
-              {/* ADDRESS ZONE (TO & FROM) */}
-              <div className="grid grid-cols-2 gap-6 mb-6">
+                    {/* Courier Name & Icons */}
+                    <div className="flex justify-between items-start p-3 py-2">
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xl font-bold">ValmoPlus</span>
+                        <span className="bg-black text-white text-[10px] px-1 font-bold mt-1">Pickup</span>
+                      </div>
+                      <div className="bg-black text-white w-7 h-7 flex items-center justify-center font-bold text-lg mt-1">C</div>
+                    </div>
 
-                {/* SHIP TO */}
-                <div className="border border-black p-4 relative">
-                  <div className="absolute -top-3 left-3 bg-white px-2 text-xs font-black uppercase">Deliver To</div>
-                  <p className="font-black text-lg mb-2">{selectedOrder.address?.fullName || "Customer"}</p>
-                  <div className="text-sm font-medium leading-relaxed">
-                    <p>{selectedOrder.address?.addressLine || ""}</p>
-                    <p>{selectedOrder.address?.city || ""}, {selectedOrder.address?.state || ""}</p>
-                    <p className="font-bold text-base mt-1">{selectedOrder.address?.country || ""} - {selectedOrder.address?.pincode || ""}</p>
-                    <p className="mt-3 font-bold border-t border-gray-300 pt-2">Phone: {selectedOrder.address?.phone || "N/A"}</p>
+                    <div className="flex justify-end p-2 px-3 pb-0 opacity-80 mix-blend-multiply filter contrast-150">
+                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&margin=0&data=${selectedOrder._id}`} alt="QR" className="w-16 h-16 object-contain" />
+                    </div>
+
+                    {/* Routing Codes */}
+                    <div className="px-3 pb-2 text-lg font-extrabold leading-tight tracking-wider mt-[-60px]">
+                      <p>KMH-R0</p>
+                      <p className="mt-4">PCSA</p>
+                      <p className="mt-1">W1/SHS</p>
+                      <p className="mt-1">N2/AG2S</p>
+                      <p className="mt-1">UP3/FQV</p>
+                    </div>
+
+                    {/* Barcode Area */}
+                    <div className="mt-auto pt-2">
+                      <div className="bg-black text-white text-center py-1.5 text-[15px] font-bold tracking-widest">
+                        VL0082519283988
+                      </div>
+                      <div className="h-[70px] flex items-center justify-center overflow-hidden px-4 mt-1 opacity-90 py-1" style={{ gap: '2px' }}>
+                        {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1].map((w, idx) => (
+                          <div key={idx} className="bg-black h-full" style={{ width: `${w}px`, flexShrink: 0 }}></div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* RETURN TO */}
-                <div className="border border-black p-4 relative bg-gray-50">
-                  <div className="absolute -top-3 left-3 bg-gray-50 px-2 text-xs font-bold uppercase text-gray-600">Return Address (If Undelivered)</div>
-
-                  {adminProfile?.shopName ? (
-                    <p className="font-black text-md mb-2">{adminProfile.shopName}</p>
-                  ) : (
-                    <p className="font-black text-md mb-2">FABNOOR RETURNS</p>
-                  )}
-
-                  <div className="text-sm text-gray-700 leading-relaxed">
-                    {adminProfile?.name && <p>Attn: {adminProfile.name}</p>}
-
-                    {adminProfile?.address?.street ? (
-                      <>
-                        <p>{adminProfile.address.street}</p>
-                        <p>{adminProfile.address.city}, {adminProfile.address.state}</p>
-                        <p>{adminProfile.address.country} - {adminProfile.address.zipcode}</p>
-                      </>
-                    ) : (
-                      <p className="italic text-gray-500 mt-2">No return address configured in admin profile.</p>
-                    )}
-
-                    {adminProfile?.mobile && (
-                      <p className="mt-2 font-semibold">Phone: {adminProfile.mobile}</p>
-                    )}
-                  </div>
-                </div>
-
-              </div>
-
-              {/* PRODUCT DETAILS (NO PRICES) */}
-              <div className="border-t-2 border-dashed border-gray-400 pt-4 mt-4">
-                <p className="text-xs uppercase font-bold text-gray-500 mb-2 tracking-widest">Contents Declaration</p>
-                <table className="w-full text-sm text-left border border-gray-300">
-                  <thead className="bg-gray-100 border-b border-gray-300 uppercase text-xs">
-                    <tr>
-                      <th className="p-2 border-r border-gray-300 w-12 text-center">Qty</th>
-                      <th className="p-2 border-r border-gray-300">Item Description</th>
-                      <th className="p-2 border-r border-gray-300 w-24">SKU / Code</th>
-                      <th className="p-2 w-32">Variant</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(selectedOrder?.items || []).map((item, idx) => (
-                      <tr key={idx} className="border-b border-gray-200">
-                        <td className="p-2 border-r border-gray-300 text-center font-bold text-lg">{item.quantity}</td>
-                        <td className="p-2 border-r border-gray-300 font-semibold">{item.name}</td>
-                        <td className="p-2 border-r border-gray-300 font-mono text-xs">{item.code || "N/A"}</td>
-                        <td className="p-2 text-xs">
-                          <div>{item.color ? `Color: ${item.color}` : ''}</div>
-                          <div>{item.size ? `Size: ${item.size}` : ''}</div>
-                        </td>
+                {/* ROW 2: PRODUCT DETAILS */}
+                <div className="border-b-[3px] border-black p-0">
+                  <table className="w-full text-left border-collapse bg-white">
+                    <thead>
+                      <tr>
+                        <th colSpan="5" className="p-1.5 px-3 text-[12px] font-bold">Product Details</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                      <tr className="text-[12px] font-bold border-b border-black">
+                        <th className="p-1 px-3 pb-2">SKU</th>
+                        <th className="p-1 px-3 pb-2">Size</th>
+                        <th className="p-1 px-3 pb-2 text-center">Qty</th>
+                        <th className="p-1 px-3 pb-2">Color</th>
+                        <th className="p-1 px-3 pb-2">Order No.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedOrder.items?.map((item, i) => (
+                        <tr key={i} className="text-[11px] border-b border-gray-100 last:border-0">
+                          <td className="p-1.5 px-3 whitespace-nowrap overflow-hidden max-w-[120px] text-ellipsis">{item.code || "N/A"}</td>
+                          <td className="p-1.5 px-3 font-semibold">{item.size || "-"}</td>
+                          <td className="p-1.5 px-3 text-center">{item.quantity}</td>
+                          <td className="p-1.5 px-3">{item.color || "-"}</td>
+                          <td className="p-1.5 px-3 break-all font-semibold max-w-[150px]">{selectedOrder.orderNumber || selectedOrder._id}_{i + 1}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-              <div className="mt-8 text-center text-xs text-gray-400 uppercase font-semibold">
-                This is a computer-generated document. No signature is required.
+                {/* ROW 3: TAX INVOICE SECTION */}
+                <div className="border-b-[3px] border-black">
+                  <div className="bg-gray-100 flex justify-between items-center p-1 border-b border-black">
+                    <span className="text-[11px] font-bold mx-auto w-[65%] text-center tracking-widest uppercase ml-auto">TAX INVOICE</span>
+                    <span className="text-[9px] whitespace-nowrap px-2 font-medium">Original For Recipient</span>
+                  </div>
+
+                  {/* Bill to / Sold By Headers */}
+                  <div className="flex">
+                    {/* Bill To */}
+                    <div className="w-[45%] p-2 px-3 border-r border-black text-[10px] leading-tight">
+                      <p className="font-bold text-[11px] mb-2">BILL TO / SHIP TO</p>
+                      <p className="capitalize text-[11px] leading-relaxed">
+                        {selectedOrder?.address?.fullName} - , {selectedOrder?.address?.city}, {selectedOrder?.address?.state}, {selectedOrder?.address?.pincode},
+                      </p>
+                      <p className="mt-2 text-[10px]">Place of Supply: {selectedOrder?.address?.state}</p>
+                    </div>
+                    {/* Sold By */}
+                    <div className="w-[55%] p-2 px-3 text-[10px] leading-snug">
+                      <p><span className="font-bold">Sold by :</span> {adminProfile?.shopName || "FABNOOR"}</p>
+                      <p className="capitalize mb-2">
+                        {adminProfile?.address?.street}, , {adminProfile?.address?.city}, {adminProfile?.address?.state}, {adminProfile?.address?.zipcode}
+                      </p>
+                      <p className="font-bold text-[11px] mb-2 mt-1">GSTIN - 24AAJFO1329D1ZN</p>
+                      <div className="flex justify-between mt-1 w-full text-[9px]">
+                        <div className="pr-2">
+                          <p>Purchase Order No.</p>
+                          <p className="font-bold">{selectedOrder.orderNumber || selectedOrder._id}</p>
+                        </div>
+                        <div className="px-2 border-l border-gray-300">
+                          <p>Invoice No.</p>
+                          <p className="font-bold">zvkt{String(Date.now()).slice(-6)}</p>
+                        </div>
+                        <div className="px-2 border-l border-gray-300">
+                          <p>Order Date</p>
+                          <p className="font-bold">{getOrderDate(selectedOrder).split(',')[0].replace(/\//g, '.')}</p>
+                        </div>
+                        <div className="pl-2 border-l border-gray-300">
+                          <p>Invoice Date</p>
+                          <p className="font-bold">{new Date().toLocaleDateString().replace(/\//g, '.')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ROW 4: TAX TABLE - FIXED HEADER WIDTHS */}
+                <div className="border-b-[3px] border-black">
+                  <table className="w-full text-left border-collapse text-[10px]">
+                    <thead>
+                      <tr className="border-b border-black">
+                        <th className="p-1 px-1.5 font-bold w-[28%] max-w-[28%] break-words">Description</th>
+                        <th className="p-1 px-1 font-bold w-[7%] text-center">HSN</th>
+                        <th className="p-1 px-1 font-bold w-[5%] text-center">Qty</th>
+                        <th className="p-1 px-1 font-bold w-[12%] text-center">Gross Amount</th>
+                        <th className="p-1 px-1 font-bold w-[10%] text-center">Discount</th>
+                        <th className="p-1 px-1 font-bold w-[13%] text-center">Taxable Value</th>
+                        <th className="p-1 px-1 font-bold w-[14%] text-center">Taxes</th>
+                        <th className="p-1 px-2 font-bold w-[11%] text-right shrink-0">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedOrder.items?.map((item, i) => {
+                        const totalObjPrice = Number(item.price) * Number(item.quantity);
+                        const taxable = (totalObjPrice / 1.05).toFixed(2);
+                        const tax = (totalObjPrice - taxable).toFixed(2);
+
+                        return (
+                          <tr key={i} className="border-b border-gray-100 last:border-0 align-top">
+                            <td className="p-1.5 px-1.5 leading-tight w-[28%] max-w-[28%] break-words">
+                              <span className="block">{item.name} -</span>
+                              <span className="font-bold">{item.size}</span>
+                            </td>
+                            <td className="p-1.5 py-2 text-center">158374</td>
+                            <td className="p-1.5 py-2 text-center font-bold">{item.quantity}</td>
+                            <td className="p-1.5 py-2 text-center">Rs.{totalObjPrice.toFixed(2)}</td>
+                            <td className="p-1.5 py-2 text-center">Rs.0.00</td>
+                            <td className="p-1.5 py-2 text-center">Rs.{taxable}</td>
+                            <td className="p-1.5 py-2 text-center leading-tight">
+                              IGST @5.0%<br />Rs.{tax}
+                            </td>
+                            <td className="p-1.5 px-2 py-2 font-bold text-right">Rs.{totalObjPrice.toFixed(2)}</td>
+                          </tr>
+                        )
+                      })}
+                      {/* Shipping/Other Charges Row */}
+                      <tr className="align-top">
+                        <td className="p-1.5 px-1.5 leading-tight pt-3">Other Charges</td>
+                        <td className="p-1.5 py-3 text-center">158374</td>
+                        <td className="p-1.5 py-3 text-center">NA</td>
+                        {(() => {
+                          const itemsTotal = selectedOrder.items?.reduce((acc, item) => acc + (Number(item.price) * Number(item.quantity)), 0) || 0;
+                          const shippingCharge = selectedOrder.amount > itemsTotal ? selectedOrder.amount - itemsTotal : 0;
+                          const sTaxable = (shippingCharge / 1.05).toFixed(2);
+                          const sTax = (shippingCharge - sTaxable).toFixed(2);
+                          return (
+                            <>
+                              <td className="p-1.5 py-3 text-center">Rs.{shippingCharge.toFixed(2)}</td>
+                              <td className="p-1.5 py-3 text-center">Rs.0</td>
+                              <td className="p-1.5 py-3 text-center">Rs.{sTaxable}</td>
+                              <td className="p-1.5 py-3 text-center leading-tight">
+                                IGST @5.0%<br />Rs.{sTax}
+                              </td>
+                              <td className="p-1.5 px-2 py-3 font-bold text-right">Rs.{shippingCharge.toFixed(2)}</td>
+                            </>
+                          )
+                        })()}
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t border-black font-extrabold text-[11px]">
+                        <td colSpan="6" className="p-2 py-2.5">Total</td>
+                        <td className="p-2 py-2.5 text-center text-[10px]">
+                          {(() => {
+                            const totalTax = selectedOrder.amount - (selectedOrder.amount / 1.05);
+                            return <span className="font-bold">Rs.{totalTax.toFixed(2)}</span>;
+                          })()}
+                        </td>
+                        <td className="p-2 py-2.5 text-right">Rs.{selectedOrder.amount.toFixed(2)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {/* ROW 5: FOOTER */}
+                <div className="p-1.5 px-2 pb-2 pt-1.5 text-[8.5px] leading-[1.3] text-gray-700 font-medium w-[100%] text-justify">
+                  Tax is not payable on reverse charge basis. This is a computer generated invoice and does not require signature. Other charges are charges that are applicable to your order and include charges for logistics fee (where applicable). Includes discounts for your city and/or for online payments (as applicable)
+                </div>
               </div>
 
             </div>
