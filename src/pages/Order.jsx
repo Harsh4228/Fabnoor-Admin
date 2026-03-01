@@ -21,6 +21,7 @@ const Order = ({ token }) => {
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [statusUpdating, setStatusUpdating] = useState(null);
+  const [paymentUpdating, setPaymentUpdating] = useState(null);
   const [showRaw, setShowRaw] = useState(false);
   const [adminProfile, setAdminProfile] = useState(null); // ✅ hold admin profile for return address
 
@@ -115,6 +116,7 @@ const Order = ({ token }) => {
 
   /* ================= UPDATE PAYMENT ================= */
   const updatePayment = async (orderId, payment) => {
+    setPaymentUpdating(orderId);
     try {
       const res = await axios.post(
         `${backendUrl}/api/order/paymentstatus`,
@@ -134,6 +136,8 @@ const Order = ({ token }) => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setPaymentUpdating(null);
     }
   };
 
@@ -249,8 +253,8 @@ const Order = ({ token }) => {
               key={status}
               onClick={() => setActiveStatus(status)}
               className={`px-5 md:px-8 py-3 rounded-2xl font-bold border-2 transition-all transform hover:scale-105 ${activeStatus === status
-                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl border-transparent"
-                : "bg-white text-gray-700 border-gray-200 hover:border-blue-300 shadow-md"
+                ? "bg-blue-600 text-white shadow-md border-transparent hover:bg-blue-700"
+                : "bg-white text-gray-700 border-gray-200 hover:border-blue-300 shadow-sm"
                 }`}
             >
               {status}
@@ -298,11 +302,11 @@ const Order = ({ token }) => {
                     {/* LEFT - Customer Info */}
                     <div className="flex gap-4 md:flex-1">
                       <div className="flex-shrink-0">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <div className="w-16 h-16 bg-blue-50/80 border border-blue-100 rounded-2xl flex items-center justify-center shadow-sm">
                           <img
                             src={assets.parcel_icon}
                             alt="parcel"
-                            className="w-10 h-10"
+                            className="w-10 h-10 opacity-80"
                           />
                         </div>
                       </div>
@@ -375,7 +379,7 @@ const Order = ({ token }) => {
                       className="md:w-1/3 space-y-3"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-2xl border border-blue-100">
+                      <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
                         <p className="text-3xl font-bold text-gray-900">
                           {currency}
                           {order.amount}
@@ -396,17 +400,17 @@ const Order = ({ token }) => {
                       </div>
 
                       <button
-                        disabled={paymentLocked}
+                        disabled={paymentLocked || paymentUpdating === order._id}
                         onClick={(e) => {
                           e.stopPropagation();
                           updatePayment(order._id, !order.payment);
                         }}
-                        className={`w-full py-3 rounded-xl font-semibold transition-all ${paymentLocked
-                          ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                          : "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        className={`w-full py-3 rounded-xl font-semibold transition-all ${paymentLocked || paymentUpdating === order._id
+                            ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                            : "bg-blue-600 text-white shadow-md hover:shadow-lg hover:bg-blue-700 transform hover:-translate-y-0.5"
                           }`}
                       >
-                        Toggle Payment
+                        {paymentUpdating === order._id ? "Processing..." : "Toggle Payment"}
                       </button>
 
                       {actions.length > 0 && (
@@ -441,7 +445,7 @@ const Order = ({ token }) => {
             >
               Previous
             </button>
-            <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl shadow-lg">
+            <span className="font-bold text-lg bg-blue-600 text-white px-6 py-3 rounded-xl shadow-md">
               Page {page} of {totalPages}
             </span>
             <button
@@ -459,7 +463,7 @@ const Order = ({ token }) => {
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all duration-300">
             <div id="order-invoice-content" className="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl relative transform transition-all duration-300 scale-100">
               {/* Modal Header */}
-              <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-3xl z-10 shadow-lg">
+              <div className="sticky top-0 bg-blue-600 text-white p-6 rounded-t-3xl z-10 shadow-md">
                 <div className="flex justify-between items-center">
                   <div>
                     <h3 className="text-2xl font-bold">Order Details</h3>
@@ -498,7 +502,7 @@ const Order = ({ token }) => {
 
                       return (
                         <div key={s} className="flex-1 text-center">
-                          <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center ${done ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                          <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center font-bold shadow-sm ${done ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400 border border-gray-200'}`}>
                             {done ? '✓' : idx + 1}
                           </div>
                           <div className={`text-xs mt-2 ${isActive ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
@@ -510,7 +514,7 @@ const Order = ({ token }) => {
                   </div>
                 </div>
                 {/* ORDER SUMMARY */}
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-2xl border border-blue-100">
+                <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
                   <h4 className="font-bold text-lg mb-4 text-gray-800">
                     Order Summary
                   </h4>
@@ -556,28 +560,28 @@ const Order = ({ token }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* CUSTOMER DETAILS */}
-                  <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
+                  <div className="bg-blue-50/30 p-6 rounded-2xl border border-blue-100">
                     <h4 className="font-bold text-lg mb-3 text-gray-800">
                       Customer Profile
                     </h4>
                     <div className="text-sm space-y-2 text-gray-700">
-                      <p><span className="font-semibold text-indigo-900">Name:</span> {selectedOrder?.userId?.name || selectedOrder?.address?.fullName || "Guest"}</p>
-                      <p><span className="font-semibold text-indigo-900">Email:</span> {selectedOrder?.userId?.email || "N/A"}</p>
-                      <p><span className="font-semibold text-indigo-900">Profile Mobile:</span> {selectedOrder?.userId?.mobile || "N/A"}</p>
+                      <p><span className="font-semibold text-blue-900">Name:</span> {selectedOrder?.userId?.name || selectedOrder?.address?.fullName || "Guest"}</p>
+                      <p><span className="font-semibold text-blue-900">Email:</span> {selectedOrder?.userId?.email || "N/A"}</p>
+                      <p><span className="font-semibold text-blue-900">Profile Mobile:</span> {selectedOrder?.userId?.mobile || "N/A"}</p>
                       {selectedOrder?.userId?.shopName && (
-                        <p><span className="font-semibold text-indigo-900">Shop Name:</span> {selectedOrder.userId.shopName}</p>
+                        <p><span className="font-semibold text-blue-900">Shop Name:</span> {selectedOrder.userId.shopName}</p>
                       )}
                       {selectedOrder?.userId?.dob && (
-                        <p><span className="font-semibold text-indigo-900">DOB:</span> {selectedOrder.userId.dob}</p>
+                        <p><span className="font-semibold text-blue-900">DOB:</span> {selectedOrder.userId.dob}</p>
                       )}
                       {selectedOrder?.userId?.gender && (
-                        <p><span className="font-semibold text-indigo-900">Gender:</span> {selectedOrder.userId.gender}</p>
+                        <p><span className="font-semibold text-blue-900">Gender:</span> {selectedOrder.userId.gender}</p>
                       )}
 
                       {/* Show saved profile address if we populated it via userId */}
                       {selectedOrder?.userId?.address?.city && (
-                        <div className="mt-3 bg-white/50 p-3 rounded border border-indigo-100/50">
-                          <p className="font-semibold text-indigo-900 text-xs uppercase tracking-wide mb-1">Saved User Address:</p>
+                        <div className="mt-3 bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
+                          <p className="font-bold text-blue-900 text-xs tracking-wide mb-1">Saved User Address:</p>
                           <p className="text-xs">{selectedOrder.userId.address.street}</p>
                           <p className="text-xs">{selectedOrder.userId.address.city}, {selectedOrder.userId.address.state}</p>
                           <p className="text-xs">{selectedOrder.userId.address.country} - {selectedOrder.userId.address.zipcode}</p>
@@ -587,12 +591,12 @@ const Order = ({ token }) => {
                   </div>
 
                   {/* SHIPPING ADDRESS */}
-                  <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100">
+                  <div className="bg-blue-50/30 p-6 rounded-2xl border border-blue-100">
                     <h4 className="font-bold text-lg mb-3 text-gray-800">
                       Shipping Address For This Order
                     </h4>
                     <div className="text-sm space-y-1 text-gray-700">
-                      <p className="font-semibold text-orange-900 mb-1">{selectedOrder?.address?.fullName || "N/A"}</p>
+                      <p className="font-bold text-gray-900 mb-1">{selectedOrder?.address?.fullName || "N/A"}</p>
                       <p>{selectedOrder?.address?.addressLine || "N/A"}</p>
                       <p>
                         {selectedOrder?.address?.city || ""},{" "}
@@ -602,21 +606,21 @@ const Order = ({ token }) => {
                         {selectedOrder?.address?.country || ""} -{" "}
                         {selectedOrder?.address?.pincode || ""}
                       </p>
-                      <p className="mt-2 font-medium text-orange-900">Contact: {selectedOrder?.address?.phone || "N/A"}</p>
+                      <p className="mt-2 font-bold text-gray-900">Contact: {selectedOrder?.address?.phone || "N/A"}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* ITEMS */}
-                <div className="bg-purple-50 p-6 rounded-2xl border border-purple-100">
+                <div className="bg-white p-6 rounded-2xl border border-gray-200">
                   <h4 className="font-bold text-lg mb-4 text-gray-800">
                     Order Items
                   </h4>
 
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto rounded-xl border border-gray-100">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                        <tr className="bg-blue-50/80 text-blue-900 font-bold">
                           <th className="px-4 py-3 text-left rounded-tl-xl">
                             Product
                           </th>
@@ -647,7 +651,7 @@ const Order = ({ token }) => {
                               {currency}
                               {item.price}
                             </td>
-                            <td className="px-4 py-3 text-right font-bold text-purple-600">
+                            <td className="px-4 py-3 text-right font-bold text-blue-600">
                               {currency}
                               {Number(item.price) * Number(item.quantity)}
                             </td>

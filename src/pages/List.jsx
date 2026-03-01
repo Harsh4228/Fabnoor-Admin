@@ -18,6 +18,8 @@ const List = ({ token }) => {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewVariantFilter, setReviewVariantFilter] = useState("all");
   const [deletingReviewId, setDeletingReviewId] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null);
 
   /* ================= FETCH ================= */
   const fetchProducts = async () => {
@@ -36,6 +38,7 @@ const List = ({ token }) => {
   /* ================= DELETE ================= */
   const removeProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
+    setDeleteLoadingId(id);
     try {
       await axios.post(
         `${backendUrl}/api/product/remove`,
@@ -46,6 +49,8 @@ const List = ({ token }) => {
       fetchProducts();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setDeleteLoadingId(null);
     }
   };
 
@@ -138,7 +143,25 @@ const List = ({ token }) => {
   const handleImages = (vIndex, files) => {
     setEditProduct((p) => {
       const updated = deepClone(p);
-      updated.variants[vIndex].newImages = Array.from(files);
+      const newFiles = Array.from(files);
+      const currentNewImages = updated.variants[vIndex].newImages || [];
+      updated.variants[vIndex].newImages = [...currentNewImages, ...newFiles];
+      return updated;
+    });
+  };
+
+  const removeExistingImage = (vIndex, imgIndex) => {
+    setEditProduct((p) => {
+      const updated = deepClone(p);
+      updated.variants[vIndex].images.splice(imgIndex, 1);
+      return updated;
+    });
+  };
+
+  const removeNewImage = (vIndex, imgIndex) => {
+    setEditProduct((p) => {
+      const updated = deepClone(p);
+      updated.variants[vIndex].newImages.splice(imgIndex, 1);
       return updated;
     });
   };
@@ -146,6 +169,7 @@ const List = ({ token }) => {
   /* ================= SUBMIT ================= */
   const submitEdit = async () => {
     try {
+      setEditLoading(true);
       // basic validation
       if (!editProduct.name || !editProduct.description) {
         toast.error("Name and description are required");
@@ -163,6 +187,10 @@ const List = ({ token }) => {
         }
         if (!v.sizes || v.sizes.length === 0) {
           toast.error(`Select at least one size for ${v.color}`);
+          return;
+        }
+        if (!v.images?.length && !v.newImages?.length) {
+          toast.error(`At least one image is required for ${v.color}`);
           return;
         }
         if (!v.price || Number(v.price) <= 0) {
@@ -215,6 +243,8 @@ const List = ({ token }) => {
       fetchProducts();
     } catch (err) {
       toast.error(err.response?.data?.message || err.message);
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -251,7 +281,7 @@ const List = ({ token }) => {
         ) : (
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
             {/* Desktop Header */}
-            <div className="hidden md:grid md:grid-cols-[120px_1fr_150px_200px] gap-4 p-6 bg-gradient-to-r from-gray-800 to-gray-700 text-white font-semibold">
+            <div className="hidden md:grid md:grid-cols-[120px_1fr_150px_200px] gap-4 p-6 bg-blue-50/80 text-blue-900 border-b border-blue-100 font-bold">
               <div>Image</div>
               <div>Product Details</div>
               <div>Price</div>
@@ -323,22 +353,30 @@ const List = ({ token }) => {
                   {/* Actions */}
                   <div className="flex gap-3 justify-center" onClick={(e) => e.stopPropagation()}>
                     <button
-                      className="flex-1 md:flex-none bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                      className="flex-1 md:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all"
                       onClick={(e) => { e.stopPropagation(); setViewProduct(p); }}
                     >
                       View
                     </button>
                     <button
-                      className="flex-1 md:flex-none bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                      className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold shadow-md transition-all"
                       onClick={(e) => { e.stopPropagation(); setEditProduct(deepClone(p)); }}
                     >
                       Edit
                     </button>
                     <button
-                      className="flex-1 md:flex-none bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                      className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all ${deleteLoadingId === p._id
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
+                        }`}
                       onClick={(e) => { e.stopPropagation(); removeProduct(p._id); }}
+                      disabled={deleteLoadingId === p._id}
                     >
-                      Delete
+                      {deleteLoadingId === p._id ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : "Delete"}
                     </button>
                   </div>
                 </div>
@@ -352,16 +390,16 @@ const List = ({ token }) => {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
             <div className="bg-white max-w-4xl w-full rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto">
               {/* Header */}
-              <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center">
+              <div className="sticky top-0 bg-blue-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center shadow-md">
                 <div>
                   <h2 className="text-2xl font-bold">{viewProduct.name}</h2>
-                  <div className="flex gap-2 mt-1">
-                    <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">{viewProduct.category}</span>
-                    <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-xs font-semibold">{viewProduct.subCategory}</span>
-                    {viewProduct.bestseller && <span className="bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full text-xs font-bold">⭐ Bestseller</span>}
+                  <div className="flex gap-2 mt-2">
+                    <span className="bg-blue-500/50 text-white px-3 py-1 rounded-full text-xs font-bold">{viewProduct.category}</span>
+                    <span className="bg-blue-500/50 text-white px-3 py-1 rounded-full text-xs font-bold">{viewProduct.subCategory}</span>
+                    {viewProduct.bestseller && <span className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm">⭐ Bestseller</span>}
                   </div>
                 </div>
-                <button onClick={() => setViewProduct(null)} className="text-white hover:text-red-200 text-2xl font-bold transition-colors">✕</button>
+                <button onClick={() => setViewProduct(null)} className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all">✕</button>
               </div>
 
               <div className="p-6 space-y-6">
@@ -430,7 +468,7 @@ const List = ({ token }) => {
                             <p className="text-gray-400 text-xs mb-1">Sizes in Set</p>
                             <div className="flex gap-1 flex-wrap">
                               {(v.sizes || []).slice().sort((a, b) => SIZES.indexOf(a) - SIZES.indexOf(b)).map((s) => (
-                                <span key={s} className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold">{s}</span>
+                                <span key={s} className="bg-blue-50 border border-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">{s}</span>
                               ))}
                             </div>
                           </div>
@@ -444,19 +482,19 @@ const List = ({ token }) => {
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => { setViewReviews(true); fetchProductReviews(viewProduct._id); }}
-                    className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white py-3 rounded-2xl font-bold hover:from-yellow-500 hover:to-orange-500 transition"
+                    className="flex-1 bg-yellow-50 text-yellow-700 border border-yellow-200 py-3 rounded-2xl font-bold shadow-sm hover:bg-yellow-100 transition"
                   >
                     Reviews &#9733;
                   </button>
                   <button
                     onClick={() => { setViewProduct(null); setEditProduct(deepClone(viewProduct)); }}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-2xl font-bold"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold shadow-md transition-all"
                   >
                     Edit This Product
                   </button>
                   <button
                     onClick={() => setViewProduct(null)}
-                    className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold hover:bg-gray-200 transition"
+                    className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold hover:bg-gray-200 border border-gray-200 transition"
                   >
                     Close
                   </button>
@@ -573,12 +611,12 @@ const List = ({ token }) => {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
             <div className="bg-white max-w-6xl w-full rounded-3xl shadow-2xl max-h-[95vh] overflow-y-auto">
               {/* Modal Header */}
-              <div className="sticky top-0 bg-gradient-to-r from-gray-800 to-gray-700 text-white p-6 rounded-t-3xl z-10">
+              <div className="sticky top-0 bg-blue-600 text-white p-6 rounded-t-3xl z-10 shadow-md">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold">Edit Product</h2>
                   <button
                     onClick={() => setEditProduct(null)}
-                    className="text-white hover:text-red-300 transition-colors"
+                    className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all"
                   >
                     ✕
                   </button>
@@ -660,7 +698,7 @@ const List = ({ token }) => {
                       Product Variants (Wholesale)
                     </h3>
                     <button
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-xl font-semibold shadow-lg"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold shadow-md transition-all"
                       onClick={addVariant}
                     >
                       + Add Variant
@@ -670,14 +708,14 @@ const List = ({ token }) => {
                   {editProduct.variants.map((v, vIndex) => (
                     <div
                       key={vIndex}
-                      className="bg-purple-50 p-6 rounded-2xl border border-purple-100"
+                      className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100"
                     >
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-bold text-gray-700">
                           Variant #{vIndex + 1}
                         </h4>
                         <button
-                          className="text-red-600 font-semibold"
+                          className="text-red-500 hover:text-red-700 font-bold"
                           onClick={() => removeVariant(vIndex)}
                         >
                           Remove Variant
@@ -688,7 +726,7 @@ const List = ({ token }) => {
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-1">Color</label>
                           <input
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition"
                             value={v.color}
                             onChange={(e) =>
                               updateVariantField(vIndex, "color", e.target.value)
@@ -757,14 +795,62 @@ const List = ({ token }) => {
                       {/* Images */}
                       <div className="mb-4">
                         <label className="text-sm font-semibold text-gray-700 block mb-2">
-                          Add Images (Optional)
+                          Existing Images
+                        </label>
+                        {v.images && v.images.length > 0 ? (
+                          <div className="flex gap-2 mb-3 overflow-x-auto p-2 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                            {v.images.map((imgUrl, idx) => (
+                              <div key={idx} className="relative flex-shrink-0 group">
+                                <img
+                                  src={imgUrl}
+                                  alt=""
+                                  className="w-20 h-20 object-cover rounded-lg shadow-sm border border-gray-100"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeExistingImage(vIndex, idx)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex justify-center items-center text-xs font-bold shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 mb-3 italic">No existing images.</p>
+                        )}
+
+                        <label className="text-sm font-semibold text-gray-700 block mb-2">
+                          Add New Images (Optional)
                         </label>
                         <input
                           type="file"
                           multiple
-                          className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer"
+                          className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer mb-3"
                           onChange={(e) => handleImages(vIndex, e.target.files)}
                         />
+
+                        {/* New Images Preview */}
+                        {v.newImages && v.newImages.length > 0 && (
+                          <div className="flex gap-2 overflow-x-auto p-2 border-2 border-dashed border-blue-200 rounded-xl bg-blue-50">
+                            {v.newImages.map((file, idx) => (
+                              <div key={idx} className="relative flex-shrink-0 group">
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt=""
+                                  className="w-20 h-20 object-cover rounded-lg shadow-sm border border-blue-100"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeNewImage(vIndex, idx)}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex justify-center items-center text-xs font-bold shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Sizes */}
@@ -782,8 +868,8 @@ const List = ({ token }) => {
                                 type="button"
                                 onClick={() => toggleSize(vIndex, size)}
                                 className={`py-2 rounded-xl font-bold border-2 transition-all ${selected
-                                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent"
-                                  : "bg-white border-gray-300 text-gray-600 hover:border-purple-400"
+                                  ? "bg-blue-600 text-white border-transparent shadow-sm"
+                                  : "bg-white border-gray-300 text-gray-600 hover:border-blue-400"
                                   }`}
                               >
                                 {size}
@@ -805,10 +891,19 @@ const List = ({ token }) => {
                     Cancel
                   </button>
                   <button
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-2xl font-bold shadow-xl"
+                    className={`flex-1 text-white py-4 rounded-2xl font-bold shadow-xl flex items-center justify-center gap-2 ${editLoading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-blue-600 to-purple-600"
+                      }`}
                     onClick={submitEdit}
+                    disabled={editLoading}
                   >
-                    Update Product
+                    {editLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Product"
+                    )}
                   </button>
                 </div>
               </div>

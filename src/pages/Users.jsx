@@ -9,10 +9,10 @@ const Users = ({ token }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // User details modal state
     const [selectedUser, setSelectedUser] = useState(null);
     const [userDetails, setUserDetails] = useState(null);
     const [detailsLoading, setDetailsLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     // Product details modal state
     const [viewProduct, setViewProduct] = useState(null);
@@ -83,12 +83,12 @@ const Users = ({ token }) => {
         return products.find(p => p._id === productId);
     };
 
-    /* ================= DELETE USER ================= */
     const handleDeleteUser = async (userId, userName) => {
         if (!window.confirm(`Are you sure you want to delete user ${userName}? This action cannot be undone.`)) {
             return;
         }
 
+        setDeleteLoading(true);
         try {
             const res = await axios.post(`${backendUrl}/api/user/admin/delete-user`,
                 { id: userId },
@@ -104,6 +104,8 @@ const Users = ({ token }) => {
             }
         } catch (err) {
             toast.error(err.response?.data?.message || "Error deleting user");
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -133,7 +135,7 @@ const Users = ({ token }) => {
                 {/* USERS LIST */}
                 {loading ? (
                     <div className="flex justify-center p-12">
-                        <div className="w-10 h-10 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin" />
+                        <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
                     </div>
                 ) : users.length === 0 ? (
                     <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
@@ -144,7 +146,7 @@ const Users = ({ token }) => {
                 ) : (
                     <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
                         {/* Desktop Header */}
-                        <div className="hidden md:grid md:grid-cols-[200px_1.5fr_1fr_1fr] gap-4 p-6 bg-gradient-to-r from-gray-800 to-gray-700 text-white font-semibold">
+                        <div className="hidden md:grid md:grid-cols-[200px_1.5fr_1fr_1fr] gap-4 p-6 bg-blue-50/80 text-blue-900 border-b border-blue-100 font-bold">
                             <div>Name</div>
                             <div>Contact Details</div>
                             <div>Shop / Role</div>
@@ -158,10 +160,10 @@ const Users = ({ token }) => {
                                     className="grid grid-cols-1 md:grid-cols-[200px_1.5fr_1fr_1fr] gap-2 md:gap-4 p-4 md:p-6 items-center hover:bg-gray-50 transition-colors cursor-pointer group"
                                     onClick={() => handleUserClick(u)}
                                 >
-                                    <div className="font-bold text-lg text-gray-900 group-hover:text-purple-600 transition-colors">
+                                    <div className="font-bold text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
                                         {u.name}
                                         {u.role === 'admin' && (
-                                            <span className="ml-2 inline-block bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs">Admin</span>
+                                            <span className="ml-2 inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">Admin</span>
                                         )}
                                     </div>
 
@@ -193,7 +195,7 @@ const Users = ({ token }) => {
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[60] p-2 sm:p-4">
                         <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl flex flex-col max-h-[96vh]">
                             {/* Header */}
-                            <div className="bg-gradient-to-r from-purple-700 to-purple-500 text-white p-6 rounded-t-3xl flex-shrink-0 relative overflow-hidden">
+                            <div className="bg-blue-600 text-white p-6 rounded-t-3xl flex-shrink-0 relative overflow-hidden shadow-md">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
                                 <div className="flex justify-between items-start relative z-10">
@@ -203,11 +205,11 @@ const Users = ({ token }) => {
                                         </div>
                                         <div>
                                             <h2 className="text-2xl sm:text-3xl font-bold">{selectedUser.name}</h2>
-                                            <p className="text-purple-100 opacity-90">{selectedUser.email} | {selectedUser.mobile}</p>
+                                            <p className="text-blue-100 opacity-90">{selectedUser.email} | {selectedUser.mobile}</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => setSelectedUser(null)} className="text-white hover:bg-white/20 p-2 rounded-xl transition-colors">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    <button onClick={() => setSelectedUser(null)} className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all">
+                                        ✕
                                     </button>
                                 </div>
 
@@ -224,7 +226,7 @@ const Users = ({ token }) => {
                                                 key={tab.id}
                                                 onClick={() => setActiveTab(tab.id)}
                                                 className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all whitespace-nowrap ${activeTab === tab.id
-                                                    ? 'bg-white text-purple-700 shadow-md'
+                                                    ? 'bg-white text-blue-700 shadow-md'
                                                     : 'bg-white/10 text-white hover:bg-white/20'
                                                     }`}
                                             >
@@ -239,7 +241,7 @@ const Users = ({ token }) => {
                             <div className="p-6 overflow-y-auto flex-1 bg-gray-50/50">
                                 {detailsLoading ? (
                                     <div className="flex justify-center items-center h-40">
-                                        <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin" />
+                                        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
                                     </div>
                                 ) : userDetails ? (
                                     <div className="animate-fade-in">
@@ -291,9 +293,16 @@ const Users = ({ token }) => {
                                                         <p className="text-sm text-gray-600 mb-4">Deleting this user will permanently remove their account and all associated data.</p>
                                                         <button
                                                             onClick={() => handleDeleteUser(userDetails.user._id, userDetails.user.name)}
-                                                            className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition-colors shadow-sm"
+                                                            disabled={deleteLoading}
+                                                            className={`w-full font-semibold py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 ${deleteLoading ? "bg-red-300 text-white cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"
+                                                                }`}
                                                         >
-                                                            Delete User
+                                                            {deleteLoading ? (
+                                                                <>
+                                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                                    Deleting...
+                                                                </>
+                                                            ) : "Delete User"}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -336,7 +345,7 @@ const Users = ({ token }) => {
                                                                 </div>
                                                                 <div className="text-right">
                                                                     <p className="text-xl font-bold text-gray-900">{currency}{formatNumber(order.amount)}</p>
-                                                                    <button className="text-purple-600 text-sm font-semibold mt-2 hover:underline">View Details →</button>
+                                                                    <button className="text-blue-600 text-sm font-semibold mt-2 hover:underline">View Details →</button>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -354,34 +363,67 @@ const Users = ({ token }) => {
                                                     </div>
                                                 ) : (
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                                        {Object.entries(userDetails.user.cartData).map(([productId, sizesObj]) => {
+                                                        {Object.entries(userDetails.user.cartData).map(([cartKey, cartValue]) => {
+                                                            let productId, color, type, code, sizeArr;
+                                                            let totalQty = 0;
+
+                                                            // Handle structural differences 
+                                                            if (cartKey.includes("::")) {
+                                                                const [pid, c, t, cd] = cartKey.split("::");
+                                                                productId = pid;
+                                                                color = decodeURIComponent(c || "");
+                                                                type = decodeURIComponent(t || "");
+                                                                code = cd !== undefined ? decodeURIComponent(cd) : "";
+                                                                totalQty = Number(cartValue?.quantity || 0);
+                                                            } else {
+                                                                productId = cartKey;
+                                                                color = "";
+                                                                type = "";
+                                                                code = "";
+                                                                // cartValue might be { "S": 2, "M": 1 }
+                                                                if (typeof cartValue === 'object' && cartValue !== null) {
+                                                                    totalQty = Object.values(cartValue).reduce((acc, q) => acc + Number(q), 0);
+                                                                    sizeArr = Object.entries(cartValue).filter(([s, q]) => Number(q) > 0).map(([s]) => s);
+                                                                }
+                                                            }
+
                                                             const product = getProductById(productId);
-                                                            if (!product) return null; // In case product was deleted
+                                                            if (!product || totalQty <= 0) return null;
 
-                                                            return Object.entries(sizesObj).map(([size, quantity]) => {
-                                                                if (quantity <= 0) return null;
+                                                            // Try to match variant to get the correct thumbnail
+                                                            const variants = product.variants || [];
+                                                            let matchedVariant = code ? variants.find(v => v.code === code) : null;
+                                                            if (!matchedVariant) matchedVariant = variants.find(v => v.color === color && (v.type === type || v.fabric === type)) || variants[0];
 
-                                                                return (
-                                                                    <div
-                                                                        key={`${productId}_${size}`}
-                                                                        className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-purple-300 transition-colors"
-                                                                        onClick={() => setViewProduct(product)}
-                                                                    >
-                                                                        <img
-                                                                            src={product.variants?.[0]?.images?.[0] || ''}
-                                                                            alt={product.name}
-                                                                            className="w-16 h-16 object-cover rounded-xl"
-                                                                        />
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <p className="font-semibold text-gray-800 truncate">{product.name}</p>
-                                                                            <div className="flex items-center justify-between mt-1">
-                                                                                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md font-medium">Size: {size}</span>
-                                                                                <span className="text-sm font-bold text-gray-900">Qty: {quantity}</span>
-                                                                            </div>
+                                                            const thumbnail = matchedVariant?.images?.[0] || product.variants?.[0]?.images?.[0] || '';
+
+                                                            return (
+                                                                <div
+                                                                    key={cartKey}
+                                                                    className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-300 transition-colors"
+                                                                    onClick={() => setViewProduct(product)}
+                                                                >
+                                                                    <img
+                                                                        src={thumbnail}
+                                                                        alt={product.name}
+                                                                        className="w-16 h-16 object-cover rounded-xl"
+                                                                    />
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="font-semibold text-gray-800 truncate">{product.name}</p>
+                                                                        {color && (
+                                                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                                                {color} {code ? `(${code})` : ''}
+                                                                            </p>
+                                                                        )}
+                                                                        <div className="flex items-center justify-between mt-1">
+                                                                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md font-medium">
+                                                                                {sizeArr ? sizeArr.join(", ") : matchedVariant?.sizes?.join(", ") || "Full Set"}
+                                                                            </span>
+                                                                            <span className="text-sm font-bold text-gray-900">Qty: {totalQty}</span>
                                                                         </div>
                                                                     </div>
-                                                                );
-                                                            })
+                                                                </div>
+                                                            );
                                                         })}
                                                     </div>
                                                 )}
@@ -406,7 +448,7 @@ const Users = ({ token }) => {
                                                             return (
                                                                 <div
                                                                     key={index}
-                                                                    className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-pink-300 transition-colors group"
+                                                                    className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-300 transition-colors group"
                                                                     onClick={() => setViewProduct(product)}
                                                                 >
                                                                     <img
@@ -415,7 +457,7 @@ const Users = ({ token }) => {
                                                                         className="w-16 h-16 object-cover rounded-xl"
                                                                     />
                                                                     <div className="flex-1 min-w-0">
-                                                                        <p className="font-semibold text-gray-800 truncate group-hover:text-pink-600 transition-colors">{product.name}</p>
+                                                                        <p className="font-semibold text-gray-800 truncate group-hover:text-blue-600 transition-colors">{product.name}</p>
                                                                         <div className="mt-1 flex items-center gap-2 text-xs font-semibold">
                                                                             {item.color && (
                                                                                 <span className="text-gray-500">
@@ -449,14 +491,14 @@ const Users = ({ token }) => {
                 {viewProduct && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[70] p-4">
                         <div className="bg-white max-w-4xl w-full rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto">
-                            <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center">
+                            <div className="sticky top-0 bg-blue-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center shadow-md">
                                 <div>
                                     <h2 className="text-2xl font-bold">{viewProduct.name}</h2>
-                                    <div className="flex gap-2 mt-1">
-                                        <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-semibold">{viewProduct.category}</span>
+                                    <div className="flex gap-2 mt-2">
+                                        <span className="bg-blue-500/50 text-white px-3 py-1 rounded-full text-xs font-bold">{viewProduct.category}</span>
                                     </div>
                                 </div>
-                                <button onClick={() => setViewProduct(null)} className="text-white hover:text-red-200 text-2xl font-bold">✕</button>
+                                <button onClick={() => setViewProduct(null)} className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all">✕</button>
                             </div>
 
                             <div className="p-6 space-y-6">
@@ -501,12 +543,12 @@ const Users = ({ token }) => {
                 {viewOrder && (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[70] p-4">
                         <div className="bg-white max-w-2xl w-full rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col">
-                            <div className="sticky top-0 bg-gradient-to-r from-blue-700 to-indigo-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center">
+                            <div className="sticky top-0 bg-blue-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center shadow-md">
                                 <div>
                                     <h2 className="text-xl font-bold">Order Details</h2>
-                                    <p className="text-blue-100 text-sm">{viewOrder.orderNumber || viewOrder._id}</p>
+                                    <p className="text-blue-100 text-sm mt-1">{viewOrder.orderNumber || viewOrder._id}</p>
                                 </div>
-                                <button onClick={() => setViewOrder(null)} className="text-white hover:text-red-200 text-2xl font-bold">✕</button>
+                                <button onClick={() => setViewOrder(null)} className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all">✕</button>
                             </div>
 
                             <div className="p-6 space-y-6">

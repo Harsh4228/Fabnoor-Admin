@@ -10,7 +10,7 @@ const Sidebar = () => {
       {/* Mobile Menu Toggle Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className='md:hidden fixed bottom-6 right-6 z-50 bg-gradient-to-br from-gray-800 to-gray-900 text-white p-4 rounded-full shadow-2xl hover:shadow-xl transform hover:scale-110 active:scale-95 transition-all duration-300'
+        className='md:hidden fixed bottom-6 right-6 z-50 bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 hover:shadow-xl transform hover:scale-110 active:scale-95 transition-all duration-300'
       >
         {isMobileMenuOpen ? (
           <svg className='w-6 h-6' fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,12 +34,12 @@ const Sidebar = () => {
       {/* Mobile Sidebar */}
       <div className={`md:hidden fixed left-0 top-0 h-full w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
-        <div className='p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white'>
+        <div className='p-6 border-b border-gray-200 bg-gray-50'>
           <div className='flex items-center justify-between'>
             <h2 className='font-bold text-xl text-gray-800'>Menu</h2>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className='p-2 hover:bg-gray-100 rounded-lg transition-colors'
+              className='p-2 hover:bg-gray-200 rounded-lg transition-colors'
             >
               <svg className='w-5 h-5 text-gray-600' fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -51,77 +51,78 @@ const Sidebar = () => {
         <div className='flex flex-col gap-3 p-5'>
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-4 border border-gray-200 px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+              `flex items-center gap-4 border px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm font-bold'
+                : 'border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-700'
               }`
             }
             to="/add"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <img className="w-6 h-6 group-hover:scale-110 transition-transform" src={assets.add_icon} alt="Add" />
-            <p className="font-semibold">Add Items</p>
+            <p>Add Items</p>
           </NavLink>
 
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-4 border border-gray-200 px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+              `flex items-center gap-4 border px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm font-bold'
+                : 'border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-700'
               }`
             }
             to="/list"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <img className="w-6 h-6 group-hover:scale-110 transition-transform" src={assets.order_icon} alt="List" />
-            <p className="font-semibold">List Items</p>
+            <p>List Items</p>
           </NavLink>
 
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-4 border border-gray-200 px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+              `flex items-center gap-4 border px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm font-bold'
+                : 'border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-700'
               }`
             }
             to="/orders"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <img className="w-6 h-6 group-hover:scale-110 transition-transform" src={assets.order_icon} alt="Orders" />
-            <p className="font-semibold">Orders</p>
+            <p>Orders</p>
           </NavLink>
 
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-4 border border-gray-200 px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+              `flex items-center gap-4 border px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm font-bold'
+                : 'border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-700'
               }`
             }
             to="/reels"
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <img className="w-6 h-6 group-hover:scale-110 transition-transform" src={assets.reel_icon} alt="Reels" />
-            <p className="font-semibold">ReelsAdmin</p>
+            <img className="w-6 h-6 group-hover:scale-110 transition-transform" src={assets.order_icon} alt="Reels" />
+            <p>ReelsAdmin</p>
           </NavLink>
+
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-4 border border-gray-200 px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-300 hover:shadow-md'
+              `flex items-center gap-4 border px-4 py-3.5 rounded-xl transition-all duration-300 group ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm font-bold'
+                : 'border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-700'
               }`
             }
             to="/users"
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <img className="w-6 h-6 group-hover:scale-110 transition-transform" src={assets.profile_icon || assets.order_icon} alt="Users" />
-            <p className="font-semibold">Users</p>
+            <img className="w-6 h-6 group-hover:scale-110 transition-transform" src={assets.parcel_icon} alt="Users" />
+            <p>Users</p>
           </NavLink>
         </div>
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:block w-[18%] min-w-[240px] min-h-screen border-r-2 border-gray-200 bg-gradient-to-b from-gray-50 to-white shadow-sm">
+      <div className="hidden md:block w-[18%] min-w-[240px] min-h-screen border-r border-gray-200 bg-white shadow-sm">
         <div className="flex flex-col gap-4 pt-8 pl-[20%] pr-4 text-[15px] sticky top-20">
 
           <div className='mb-2'>
@@ -130,86 +131,87 @@ const Sidebar = () => {
 
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-3 border border-gray-300 border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-400 hover:shadow-md hover:pl-5'
+              `flex items-center gap-3 border border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm font-bold'
+                : 'hover:bg-gray-50 border-transparent text-gray-700'
               }`
             }
             to="/add"
           >
             <img
-              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10"
+              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10 opacity-70"
               src={assets.add_icon}
               alt="Add"
             />
-            <p className="hidden lg:block font-semibold relative z-10">Add Items</p>
+            <p className="block font-medium relative z-10">Add Items</p>
           </NavLink>
 
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-3 border border-gray-300 border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-400 hover:shadow-md hover:pl-5'
+              `flex items-center gap-3 border border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm font-bold'
+                : 'hover:bg-gray-50 border-transparent text-gray-700'
               }`
             }
             to="/list"
           >
             <img
-              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10"
+              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10 opacity-70"
               src={assets.order_icon}
               alt="List"
             />
-            <p className="hidden lg:block font-semibold relative z-10">List Items</p>
+            <p className="block font-medium relative z-10">List Items</p>
           </NavLink>
 
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-3 border border-gray-300 border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-400 hover:shadow-md hover:pl-5'
+              `flex items-center gap-3 border border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm font-bold'
+                : 'hover:bg-gray-50 border-transparent text-gray-700'
               }`
             }
             to="/orders"
           >
             <img
-              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10"
+              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10 opacity-70"
               src={assets.order_icon}
               alt="Orders"
             />
-            <p className="hidden lg:block font-semibold relative z-10">Orders</p>
+            <p className="block font-medium relative z-10">Orders</p>
           </NavLink>
 
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-3 border border-gray-300 border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-400 hover:shadow-md hover:pl-5'
+              `flex items-center gap-3 border border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm font-bold'
+                : 'hover:bg-gray-50 border-transparent text-gray-700'
               }`
             }
             to="/reels"
           >
             <img
-              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10"
-              src={assets.reel_icon}
+              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10 opacity-70"
+              src={assets.order_icon}
               alt="Reels"
             />
-            <p className="hidden lg:block font-semibold relative z-10">ReelsAdmin</p>
+            <p className="block font-medium relative z-10">ReelsAdmin</p>
           </NavLink>
+
           <NavLink
             className={({ isActive }) =>
-              `flex items-center gap-3 border border-gray-300 border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
-                ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg border-transparent'
-                : 'hover:bg-gray-50 hover:border-gray-400 hover:shadow-md hover:pl-5'
+              `flex items-center gap-3 border border-r-0 px-4 py-3.5 rounded-l-xl transition-all duration-300 group relative overflow-hidden ${isActive
+                ? 'bg-blue-50 text-blue-700 border-blue-100 shadow-sm font-bold'
+                : 'hover:bg-gray-50 border-transparent text-gray-700'
               }`
             }
             to="/users"
           >
             <img
-              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10"
-              src={assets.profile_icon || assets.order_icon}
+              className="w-5 h-5 group-hover:scale-110 transition-transform relative z-10 opacity-70"
+              src={assets.parcel_icon}
               alt="Users"
             />
-            <p className="hidden lg:block font-semibold relative z-10">Users</p>
+            <p className="block font-medium relative z-10">Users</p>
           </NavLink>
         </div>
       </div>

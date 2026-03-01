@@ -15,6 +15,7 @@ const Add = ({ token }) => {
   const [category, setCategory] = useState("");
   const [subCategory, setSubCategory] = useState("");
   const [bestseller, setBestseller] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Auto-complete data
   const [existingCategories, setExistingCategories] = useState([]);
@@ -164,6 +165,7 @@ const Add = ({ token }) => {
 
     if (!validateForm()) return;
 
+    setLoading(true);
     try {
       const formData = new FormData();
 
@@ -220,6 +222,8 @@ const Add = ({ token }) => {
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -242,7 +246,7 @@ const Add = ({ token }) => {
           {/* ✅ Must be FORM */}
           <form onSubmit={onSubmitHandler} className="space-y-8">
             {/* Basic Info */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-2xl border border-blue-100">
+            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
               <h3 className="text-lg font-bold text-gray-800 mb-4">
                 Basic Information
               </h3>
@@ -316,7 +320,7 @@ const Add = ({ token }) => {
             </div>
 
             {/* Variants */}
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl border border-purple-100">
+            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-gray-800">
                   Product Variants (Wholesale)
@@ -325,7 +329,7 @@ const Add = ({ token }) => {
                 <button
                   type="button"
                   onClick={addVariant}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold shadow-md transition-all"
                 >
                   + Add Variant
                 </button>
@@ -340,7 +344,7 @@ const Add = ({ token }) => {
                   {variants.map((variant, vIndex) => (
                     <div
                       key={vIndex}
-                      className="bg-white p-6 rounded-2xl border-2 border-purple-100 shadow-lg"
+                      className="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm"
                     >
                       <div className="flex justify-between items-center mb-4">
                         <h4 className="font-bold text-gray-700">
@@ -366,7 +370,7 @@ const Add = ({ token }) => {
                             onChange={(e) =>
                               updateVariant(vIndex, "color", e.target.value)
                             }
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition-all"
                           />
                         </div>
 
@@ -380,7 +384,7 @@ const Add = ({ token }) => {
                             onChange={(e) =>
                               updateVariant(vIndex, "fabric", e.target.value)
                             }
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition-all"
                           />
                         </div>
 
@@ -394,7 +398,7 @@ const Add = ({ token }) => {
                             onChange={(e) =>
                               updateVariant(vIndex, "code", e.target.value)
                             }
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition-all"
                           />
                         </div>
                       </div>
@@ -413,7 +417,7 @@ const Add = ({ token }) => {
                             onChange={(e) =>
                               updateVariant(vIndex, "price", e.target.value)
                             }
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition-all"
                           />
                           {variant.price && variant.sizes?.length > 0 && (
                             <p className="text-xs text-gray-500 mt-1">
@@ -436,7 +440,7 @@ const Add = ({ token }) => {
                             onChange={(e) =>
                               updateVariant(vIndex, "stock", e.target.value)
                             }
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all"
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition-all"
                           />
                         </div>
                       </div>
@@ -453,7 +457,7 @@ const Add = ({ token }) => {
                           onChange={(e) =>
                             handleImages(vIndex, e.target.files)
                           }
-                          className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         {variant.images.length > 0 && (
                           <p className="text-sm text-green-600 mt-2 font-semibold">
@@ -492,7 +496,7 @@ const Add = ({ token }) => {
                                 }
                                 setVariants(updated);
                               }}
-                              className="px-3 py-2 border-2 border-gray-200 rounded-xl outline-none focus:border-purple-500 transition-all bg-white"
+                              className="px-3 py-2 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 transition-all bg-white"
                             >
                               <option value="">Select...</option>
                               {[...Array(SIZES.length).keys()].map(i => (
@@ -513,8 +517,8 @@ const Add = ({ token }) => {
                                 type="button"
                                 onClick={() => toggleSize(vIndex, size)}
                                 className={`py-2 rounded-xl font-bold transition-all border-2 ${selected
-                                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent shadow-md"
-                                  : "bg-white border-gray-300 text-gray-600 hover:border-purple-400"
+                                  ? "bg-blue-600 text-white border-transparent shadow-md"
+                                  : "bg-white border-gray-300 text-gray-600 hover:border-blue-400"
                                   }`}
                               >
                                 {size}
@@ -530,7 +534,7 @@ const Add = ({ token }) => {
             </div>
 
             {/* Bestseller */}
-            <div className="bg-gradient-to-r from-green-50 to-teal-50 p-6 rounded-2xl border border-green-100">
+            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
@@ -539,7 +543,7 @@ const Add = ({ token }) => {
                   className="w-5 h-5 rounded border-2 border-gray-300 text-green-600 focus:ring-4 focus:ring-green-100 cursor-pointer"
                 />
                 <div>
-                  <span className="font-semibold text-gray-800 group-hover:text-green-600 transition-colors">
+                  <span className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
                     Mark as Bestseller
                   </span>
                   <p className="text-sm text-gray-500">
@@ -552,9 +556,16 @@ const Add = ({ token }) => {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0 transition-all"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg shadow-md hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:pointer-events-none flex justify-center items-center gap-2"
             >
-              ADD PRODUCT
+              {loading && (
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              {loading ? "ADDING PRODUCT..." : "ADD PRODUCT"}
             </button>
           </form>
         </div>

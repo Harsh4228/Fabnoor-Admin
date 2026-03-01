@@ -28,7 +28,7 @@ const Navbar = ({ setToken }) => {
         {/* Logout Button */}
         <button
           onClick={() => setShowLogoutModal(true)}
-          className='group relative bg-gradient-to-r from-gray-800 via-gray-700 to-gray-900 text-white px-5 py-2.5 sm:px-8 sm:py-3 rounded-full text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center gap-2'
+          className='group relative bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 sm:px-8 sm:py-3 rounded-full text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center gap-2'
         >
           {/* Logout Icon */}
           <svg
