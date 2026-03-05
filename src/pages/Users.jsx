@@ -13,6 +13,7 @@ const Users = ({ token }) => {
     const [userDetails, setUserDetails] = useState(null);
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [makeAdminLoading, setMakeAdminLoading] = useState(false);
 
     // Product details modal state
     const [viewProduct, setViewProduct] = useState(null);
@@ -109,6 +110,76 @@ const Users = ({ token }) => {
         }
     };
 
+    const handleMakeAdmin = async (userId, userName) => {
+        if (!window.confirm(`Are you sure you want to promote ${userName} to Admin? They will have full access to this panel.`)) {
+            return;
+        }
+
+        setMakeAdminLoading(true);
+        try {
+            const res = await axios.post(`${backendUrl}/api/user/admin/make-admin`,
+                { id: userId },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                toast.success(res.data.message || "User promoted successfully");
+
+                if (userDetails?.user?._id === userId) {
+                    setUserDetails(prev => ({
+                        ...prev,
+                        user: {
+                            ...(prev?.user || {}),
+                            role: 'admin'
+                        }
+                    }));
+                }
+                fetchData();
+            } else {
+                toast.error(res.data.message || "Failed to promote user");
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Error promoting user to admin");
+        } finally {
+            setMakeAdminLoading(false);
+        }
+    };
+
+    const handleRemoveAdmin = async (userId, userName) => {
+        if (!window.confirm(`Are you sure you want to revoke Admin access for ${userName}? They will lose all access to this panel.`)) {
+            return;
+        }
+
+        setMakeAdminLoading(true);
+        try {
+            const res = await axios.post(`${backendUrl}/api/user/admin/remove-admin`,
+                { id: userId },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (res.data.success) {
+                toast.success(res.data.message || "Admin access revoked successfully");
+
+                if (userDetails?.user?._id === userId) {
+                    setUserDetails(prev => ({
+                        ...prev,
+                        user: {
+                            ...(prev?.user || {}),
+                            role: 'user'
+                        }
+                    }));
+                }
+                fetchData();
+            } else {
+                toast.error(res.data.message || "Failed to revoke admin access");
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Error revoking admin access");
+        } finally {
+            setMakeAdminLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
             <div className="max-w-7xl mx-auto">
@@ -179,10 +250,31 @@ const Users = ({ token }) => {
                                         </p>
                                     </div>
 
-                                    <div className="text-sm text-gray-500 md:text-right">
-                                        {new Date(u._id.getTimestamp ? u._id.getTimestamp() : Date.now()).toLocaleDateString('en-IN', {
-                                            day: 'numeric', month: 'short', year: 'numeric'
-                                        })}
+                                    <div className="text-sm text-gray-500 md:text-right flex flex-col md:items-end gap-2 pr-2">
+                                        <p>
+                                            {new Date(u._id.getTimestamp ? u._id.getTimestamp() : Date.now()).toLocaleDateString('en-IN', {
+                                                day: 'numeric', month: 'short', year: 'numeric'
+                                            })}
+                                        </p>
+
+                                        {/* Quick Actions (Stop Propagation to avoid triggering modal) */}
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            {u.role === 'admin' ? (
+                                                <button
+                                                    onClick={() => handleRemoveAdmin(u._id, u.name)}
+                                                    className="text-xs font-semibold px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
+                                                >
+                                                    Revoke Admin
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleMakeAdmin(u._id, u.name)}
+                                                    className="text-xs font-semibold px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 mt-1"
+                                                >
+                                                    Promote to Admin
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -259,7 +351,12 @@ const Users = ({ token }) => {
                                                         <div className="grid grid-cols-2 gap-4">
                                                             <div>
                                                                 <p className="text-gray-500 text-sm">Role</p>
-                                                                <p className="font-semibold text-gray-800 capitalize">{userDetails.user.role}</p>
+                                                                <p className="font-semibold text-gray-800 capitalize">
+                                                                    {userDetails.user.role}
+                                                                    {userDetails.user.role === 'admin' && (
+                                                                        <span className="ml-2 inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">Admin Access</span>
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                             <div>
                                                                 <p className="text-gray-500 text-sm">Gender</p>
@@ -285,6 +382,43 @@ const Users = ({ token }) => {
                                                             </div>
                                                         ) : (
                                                             <p className="text-gray-500 italic">No address provided.</p>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 bg-blue-50/30">
+                                                        <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Admin Controls</h3>
+
+                                                        {userDetails.user.role === 'admin' ? (
+                                                            <>
+                                                                <p className="text-sm text-gray-600 mb-4 bg-gray-100 p-3 rounded-lg border border-gray-200 text-center font-medium">
+                                                                    🛡️ This user is already an Admin.
+                                                                </p>
+                                                                <button
+                                                                    onClick={() => handleRemoveAdmin(userDetails.user._id, userDetails.user.name)}
+                                                                    disabled={makeAdminLoading}
+                                                                    className={`w-full font-semibold py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 mb-4 ${makeAdminLoading ? "bg-red-300 text-white cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"
+                                                                        }`}
+                                                                >
+                                                                    {makeAdminLoading ? "Revoking..." : "Revoke Admin Access"}
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <p className="text-sm text-gray-600 mb-4">Promoting this user will grant them full access to the admin dashboard.</p>
+                                                                <button
+                                                                    onClick={() => handleMakeAdmin(userDetails.user._id, userDetails.user.name)}
+                                                                    disabled={makeAdminLoading}
+                                                                    className={`w-full font-semibold py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 mb-4 ${makeAdminLoading ? "bg-blue-300 text-white cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 text-white"
+                                                                        }`}
+                                                                >
+                                                                    {makeAdminLoading ? (
+                                                                        <>
+                                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                                            Assigning Admin...
+                                                                        </>
+                                                                    ) : "Make User Admin"}
+                                                                </button>
+                                                            </>
                                                         )}
                                                     </div>
 
