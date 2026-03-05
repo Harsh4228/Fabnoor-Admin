@@ -15,6 +15,24 @@ const Users = ({ token }) => {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [makeAdminLoading, setMakeAdminLoading] = useState(false);
 
+    // Decode JWT token to get current logged in Admin ID
+    const getLoggedInUserId = () => {
+        try {
+            if (!token) return null;
+            const base64Url = token.split('.')[1];
+            if (!base64Url) return null;
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload).id;
+        } catch (e) {
+            console.error("JWT Decode Error", e);
+            return null;
+        }
+    };
+    const loggedInAdminId = getLoggedInUserId();
+
     // Product details modal state
     const [viewProduct, setViewProduct] = useState(null);
 
@@ -146,6 +164,11 @@ const Users = ({ token }) => {
     };
 
     const handleRemoveAdmin = async (userId, userName) => {
+        if (userId === loggedInAdminId) {
+            toast.error("You cannot revoke your own Admin privileges.");
+            return;
+        }
+
         if (!window.confirm(`Are you sure you want to revoke Admin access for ${userName}? They will lose all access to this panel.`)) {
             return;
         }
@@ -260,12 +283,18 @@ const Users = ({ token }) => {
                                         {/* Quick Actions (Stop Propagation to avoid triggering modal) */}
                                         <div onClick={(e) => e.stopPropagation()}>
                                             {u.role === 'admin' ? (
-                                                <button
-                                                    onClick={() => handleRemoveAdmin(u._id, u.name)}
-                                                    className="text-xs font-semibold px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
-                                                >
-                                                    Revoke Admin
-                                                </button>
+                                                u._id === loggedInAdminId ? (
+                                                    <span className="text-xs font-semibold px-3 py-1.5 text-gray-400 bg-gray-50 border border-transparent rounded-lg cursor-not-allowed">
+                                                        Current User
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleRemoveAdmin(u._id, u.name)}
+                                                        className="text-xs font-semibold px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
+                                                    >
+                                                        Revoke Admin
+                                                    </button>
+                                                )
                                             ) : (
                                                 <button
                                                     onClick={() => handleMakeAdmin(u._id, u.name)}
@@ -393,14 +422,23 @@ const Users = ({ token }) => {
                                                                 <p className="text-sm text-gray-600 mb-4 bg-gray-100 p-3 rounded-lg border border-gray-200 text-center font-medium">
                                                                     🛡️ This user is already an Admin.
                                                                 </p>
-                                                                <button
-                                                                    onClick={() => handleRemoveAdmin(userDetails.user._id, userDetails.user.name)}
-                                                                    disabled={makeAdminLoading}
-                                                                    className={`w-full font-semibold py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 mb-4 ${makeAdminLoading ? "bg-red-300 text-white cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"
-                                                                        }`}
-                                                                >
-                                                                    {makeAdminLoading ? "Revoking..." : "Revoke Admin Access"}
-                                                                </button>
+                                                                {userDetails.user._id === loggedInAdminId ? (
+                                                                    <button
+                                                                        disabled
+                                                                        className="w-full font-semibold py-2.5 rounded-xl shadow-sm text-gray-500 bg-gray-200 cursor-not-allowed"
+                                                                    >
+                                                                        You cannot revoke your own access
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => handleRemoveAdmin(userDetails.user._id, userDetails.user.name)}
+                                                                        disabled={makeAdminLoading}
+                                                                        className={`w-full font-semibold py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 mb-4 ${makeAdminLoading ? "bg-red-300 text-white cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"
+                                                                            }`}
+                                                                    >
+                                                                        {makeAdminLoading ? "Revoking..." : "Revoke Admin Access"}
+                                                                    </button>
+                                                                )}
                                                             </>
                                                         ) : (
                                                             <>
