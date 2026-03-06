@@ -23,6 +23,7 @@ const Order = ({ token }) => {
   const [statusUpdating, setStatusUpdating] = useState(null);
   const [paymentUpdating, setPaymentUpdating] = useState(null);
   const [showRaw, setShowRaw] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [adminProfile, setAdminProfile] = useState(null); // ✅ hold admin profile for return address
 
   /* ================= FETCH ADMIN PROFILE ================= */
@@ -176,7 +177,19 @@ const Order = ({ token }) => {
     }
   };
   /* ================= FILTER + PAGINATION ================= */
-  const filteredOrders = orders.filter((order) => order.status === activeStatus);
+  const filteredOrders = orders.filter((order) => {
+    const matchesStatus = order.status === activeStatus;
+    const searchLower = searchTerm.toLowerCase();
+
+    const matchesSearch =
+      !searchTerm ||
+      order.address?.fullName?.toLowerCase().includes(searchLower) ||
+      order.orderNumber?.toLowerCase().includes(searchLower) ||
+      order._id?.toLowerCase().includes(searchLower) ||
+      order.address?.phone?.includes(searchLower);
+
+    return matchesStatus && matchesSearch;
+  });
 
   const totalPages = Math.ceil(filteredOrders.length / PAGE_SIZE);
 
@@ -185,7 +198,7 @@ const Order = ({ token }) => {
     page * PAGE_SIZE
   );
 
-  useEffect(() => setPage(1), [activeStatus]);
+  useEffect(() => setPage(1), [activeStatus, searchTerm]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -248,6 +261,32 @@ const Order = ({ token }) => {
             Admin Orders
           </h2>
           <p className="text-gray-500">Manage and track all customer orders</p>
+        </div>
+
+        {/* ================= SEARCH BAR ================= */}
+        <div className="max-w-2xl mx-auto mb-8 relative group">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Search by Name, Order No, or Mobile..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 bg-white border-2 border-transparent rounded-2xl shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all text-gray-700 font-medium"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* ================= STATUS TABS ================= */}

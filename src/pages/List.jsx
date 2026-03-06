@@ -20,6 +20,7 @@ const List = ({ token }) => {
   const [deletingReviewId, setDeletingReviewId] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   /* ================= FETCH ================= */
   const fetchProducts = async () => {
@@ -271,119 +272,161 @@ const List = ({ token }) => {
           </button>
         </div>
 
-        {/* PRODUCT LIST */}
-        {products.length === 0 ? (
-          <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
-            <p className="text-xl font-semibold text-gray-400">
-              No products found
-            </p>
+        {/* ================= SEARCH BAR ================= */}
+        <div className="max-w-xl mb-8 relative group">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
-        ) : (
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-            {/* Desktop Header */}
-            <div className="hidden md:grid md:grid-cols-[120px_1fr_150px_200px] gap-4 p-6 bg-blue-50/80 text-blue-900 border-b border-blue-100 font-bold">
-              <div>Image</div>
-              <div>Product Details</div>
-              <div>Price</div>
-              <div className="text-center">Actions</div>
-            </div>
+          <input
+            type="text"
+            placeholder="Search products, SKU code, or fabric..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-transparent rounded-2xl shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-medium"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" />
+              </svg>
+            </button>
+          )}
+        </div>
 
-            <div className="divide-y divide-gray-100">
-              {products.map((p) => (
-                <div
-                  key={p._id}
-                  className="grid grid-cols-1 md:grid-cols-[120px_1fr_150px_200px] gap-4 p-4 md:p-6 items-center hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => setViewProduct(p)}
-                >
-                  {/* Image */}
-                  <div className="flex justify-center md:justify-start">
-                    <img
-                      src={p.variants?.[0]?.images?.[0]}
-                      className="w-24 h-24 md:w-20 md:h-20 object-cover rounded-2xl shadow-md border-2 border-gray-100"
-                      alt=""
-                    />
-                  </div>
+        {/* PRODUCT LIST */}
+        {(() => {
+          const filteredProducts = products.filter((p) => {
+            const searchLower = searchTerm.toLowerCase();
+            const matchesName = p.name?.toLowerCase().includes(searchLower);
+            const matchesVariants = p.variants?.some(v =>
+              v.code?.toLowerCase().includes(searchLower) ||
+              (v.fabric || v.type || "").toLowerCase().includes(searchLower)
+            );
+            return matchesName || matchesVariants;
+          });
 
-                  {/* Details */}
-                  <div className="text-center md:text-left">
-                    <p className="font-bold text-lg text-gray-900 mb-1">
-                      {p.name}
-                    </p>
-                    <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-2">
-                      <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-                        {p.category}
-                      </span>
-                      <span className="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">
-                        {p.subCategory}
-                      </span>
-                      {p.bestseller && (
-                        <span className="inline-block bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-semibold">
-                          ⭐ Bestseller
+          if (filteredProducts.length === 0) {
+            return (
+              <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
+                <p className="text-xl font-semibold text-gray-400">
+                  {searchTerm ? `No results for "${searchTerm}"` : "No products found"}
+                </p>
+              </div>
+            );
+          }
+
+          return (
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+              {/* Desktop Header */}
+              <div className="hidden md:grid md:grid-cols-[120px_1fr_150px_200px] gap-4 p-6 bg-blue-50/80 text-blue-900 border-b border-blue-100 font-bold">
+                <div>Image</div>
+                <div>Product Details</div>
+                <div>Price</div>
+                <div className="text-center">Actions</div>
+              </div>
+
+              <div className="divide-y divide-gray-100">
+                {filteredProducts.map((p) => (
+                  <div
+                    key={p._id}
+                    className="grid grid-cols-1 md:grid-cols-[120px_1fr_150px_200px] gap-4 p-4 md:p-6 items-center hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => setViewProduct(p)}
+                  >
+                    {/* Image */}
+                    <div className="flex justify-center md:justify-start">
+                      <img
+                        src={p.variants?.[0]?.images?.[0]}
+                        className="w-24 h-24 md:w-20 md:h-20 object-cover rounded-2xl shadow-md border-2 border-gray-100"
+                        alt=""
+                      />
+                    </div>
+
+                    {/* Details */}
+                    <div className="text-center md:text-left">
+                      <p className="font-bold text-lg text-gray-900 mb-1">
+                        {p.name}
+                      </p>
+                      <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-2">
+                        <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+                          {p.category}
                         </span>
-                      )}
-                    </div>
-                    {/* Per-variant stock — admin only */}
-                    <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
-                      {(p.variants || []).map((v, i) => {
-                        const stock = Number(v.stock || 0);
-                        const label = `${v.color}${v.fabric || v.type ? ` / ${v.fabric || v.type}` : ""}`;
-                        const badgeClass = stock === 0
-                          ? "bg-red-100 text-red-700"
-                          : stock < 6
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-green-100 text-green-700";
-                        return (
-                          <span key={v.code || i} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${badgeClass}`}>
-                            {label}: {stock === 0 ? "Out" : stock}
+                        <span className="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">
+                          {p.subCategory}
+                        </span>
+                        {p.bestseller && (
+                          <span className="inline-block bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-semibold">
+                            ⭐ Bestseller
                           </span>
-                        );
-                      })}
+                        )}
+                      </div>
+                      {/* Per-variant stock — admin only */}
+                      <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
+                        {(p.variants || []).map((v, i) => {
+                          const stock = Number(v.stock || 0);
+                          const label = `${v.color}${v.fabric || v.type ? ` / ${v.fabric || v.type}` : ""}`;
+                          const badgeClass = stock === 0
+                            ? "bg-red-100 text-red-700"
+                            : stock < 6
+                              ? "bg-amber-100 text-amber-700"
+                              : "bg-green-100 text-green-700";
+                          return (
+                            <span key={v.code || i} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold ${badgeClass}`}>
+                              {label}: {stock === 0 ? "Out" : stock}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Price */}
-                  <div className="text-center md:text-left">
-                    <p className="text-2xl font-bold text-gray-900">
-                      {currency}
-                      {Math.min(...(p.variants || []).map((v) => v.price || 0))}
-                    </p>
-                    <p className="text-sm text-gray-500">Starting from</p>
-                  </div>
+                    {/* Price */}
+                    <div className="text-center md:text-left">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {currency}
+                        {Math.min(...(p.variants || []).map((v) => v.price || 0))}
+                      </p>
+                      <p className="text-sm text-gray-500">Starting from</p>
+                    </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-3 justify-center" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="flex-1 md:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all"
-                      onClick={(e) => { e.stopPropagation(); setViewProduct(p); }}
-                    >
-                      View
-                    </button>
-                    <button
-                      className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold shadow-md transition-all"
-                      onClick={(e) => { e.stopPropagation(); setEditProduct(deepClone(p)); }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all ${deleteLoadingId === p._id
+                    {/* Actions */}
+                    <div className="flex gap-3 justify-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="flex-1 md:flex-none bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all"
+                        onClick={(e) => { e.stopPropagation(); setViewProduct(p); }}
+                      >
+                        View
+                      </button>
+                      <button
+                        className="flex-1 md:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold shadow-md transition-all"
+                        onClick={(e) => { e.stopPropagation(); setEditProduct(deepClone(p)); }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all ${deleteLoadingId === p._id
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                           : "bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
-                        }`}
-                      onClick={(e) => { e.stopPropagation(); removeProduct(p._id); }}
-                      disabled={deleteLoadingId === p._id}
-                    >
-                      {deleteLoadingId === p._id ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                        </div>
-                      ) : "Delete"}
-                    </button>
+                          }`}
+                        onClick={(e) => { e.stopPropagation(); removeProduct(p._id); }}
+                        disabled={deleteLoadingId === p._id}
+                      >
+                        {deleteLoadingId === p._id ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        ) : "Delete"}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ================= VIEW MODAL ================= */}
         {viewProduct && (

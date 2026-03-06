@@ -14,6 +14,7 @@ const Users = ({ token }) => {
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [makeAdminLoading, setMakeAdminLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Decode JWT token to get current logged in Admin ID
     const getLoggedInUserId = () => {
@@ -226,90 +227,132 @@ const Users = ({ token }) => {
                     </button>
                 </div>
 
+                {/* ================= SEARCH BAR ================= */}
+                <div className="max-w-xl mb-8 relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search by name, email, mobile, or shop..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-transparent rounded-2xl shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-medium"
+                    />
+                    {searchTerm && (
+                        <button
+                            onClick={() => setSearchTerm("")}
+                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
+
                 {/* USERS LIST */}
                 {loading ? (
                     <div className="flex justify-center p-12">
                         <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
                     </div>
-                ) : users.length === 0 ? (
-                    <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
-                        <p className="text-xl font-semibold text-gray-400">
-                            No users found
-                        </p>
-                    </div>
-                ) : (
-                    <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-                        {/* Desktop Header */}
-                        <div className="hidden md:grid md:grid-cols-[200px_1.5fr_1fr_1fr] gap-4 p-6 bg-blue-50/80 text-blue-900 border-b border-blue-100 font-bold">
-                            <div>Name</div>
-                            <div>Contact Details</div>
-                            <div>Shop / Role</div>
-                            <div className="text-right">Joined</div>
-                        </div>
+                ) : (() => {
+                    const filteredUsers = users.filter((u) => {
+                        const searchLower = searchTerm.toLowerCase();
+                        return (
+                            u.name?.toLowerCase().includes(searchLower) ||
+                            u.email?.toLowerCase().includes(searchLower) ||
+                            u.mobile?.includes(searchLower) ||
+                            u.shopName?.toLowerCase().includes(searchLower)
+                        );
+                    });
 
-                        <div className="divide-y divide-gray-100">
-                            {users.map((u) => (
-                                <div
-                                    key={u._id}
-                                    className="grid grid-cols-1 md:grid-cols-[200px_1.5fr_1fr_1fr] gap-2 md:gap-4 p-4 md:p-6 items-center hover:bg-gray-50 transition-colors cursor-pointer group"
-                                    onClick={() => handleUserClick(u)}
-                                >
-                                    <div className="font-bold text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
-                                        {u.name}
-                                        {u.role === 'admin' && (
-                                            <span className="ml-2 inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">Admin</span>
-                                        )}
-                                    </div>
+                    if (filteredUsers.length === 0) {
+                        return (
+                            <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
+                                <p className="text-xl font-semibold text-gray-400">
+                                    {searchTerm ? `No results for "${searchTerm}"` : "No users found"}
+                                </p>
+                            </div>
+                        );
+                    }
 
-                                    <div className="text-sm">
-                                        <p className="text-gray-800 font-medium">✉️ {u.email}</p>
-                                        <p className="text-gray-600 mt-1">📞 {u.mobile}</p>
-                                    </div>
+                    return (
+                        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+                            {/* Desktop Header */}
+                            <div className="hidden md:grid md:grid-cols-[200px_1.5fr_1fr_1fr] gap-4 p-6 bg-blue-50/80 text-blue-900 border-b border-blue-100 font-bold">
+                                <div>Name</div>
+                                <div>Contact Details</div>
+                                <div>Shop / Role</div>
+                                <div className="text-right">Joined</div>
+                            </div>
 
-                                    <div className="text-sm">
-                                        <p className="font-semibold text-gray-700">🏪 {u.shopName}</p>
-                                        <p className="text-gray-500 mt-1">
-                                            {u.address?.city ? `${u.address.city}, ${u.address.state || ''}` : "No address"}
-                                        </p>
-                                    </div>
-
-                                    <div className="text-sm text-gray-500 md:text-right flex flex-col md:items-end gap-2 pr-2">
-                                        <p>
-                                            {new Date(u._id.getTimestamp ? u._id.getTimestamp() : Date.now()).toLocaleDateString('en-IN', {
-                                                day: 'numeric', month: 'short', year: 'numeric'
-                                            })}
-                                        </p>
-
-                                        {/* Quick Actions (Stop Propagation to avoid triggering modal) */}
-                                        <div onClick={(e) => e.stopPropagation()}>
-                                            {u.role === 'admin' ? (
-                                                u._id === loggedInAdminId ? (
-                                                    <span className="text-xs font-semibold px-3 py-1.5 text-gray-400 bg-gray-50 border border-transparent rounded-lg cursor-not-allowed">
-                                                        Current User
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => handleRemoveAdmin(u._id, u.name)}
-                                                        className="text-xs font-semibold px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
-                                                    >
-                                                        Revoke Admin
-                                                    </button>
-                                                )
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleMakeAdmin(u._id, u.name)}
-                                                    className="text-xs font-semibold px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 mt-1"
-                                                >
-                                                    Promote to Admin
-                                                </button>
+                            <div className="divide-y divide-gray-100">
+                                {filteredUsers.map((u) => (
+                                    <div
+                                        key={u._id}
+                                        className="grid grid-cols-1 md:grid-cols-[200px_1.5fr_1fr_1fr] gap-2 md:gap-4 p-4 md:p-6 items-center hover:bg-gray-50 transition-colors cursor-pointer group"
+                                        onClick={() => handleUserClick(u)}
+                                    >
+                                        <div className="font-bold text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
+                                            {u.name}
+                                            {u.role === 'admin' && (
+                                                <span className="ml-2 inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">Admin</span>
                                             )}
                                         </div>
+
+                                        <div className="text-sm">
+                                            <p className="text-gray-800 font-medium">✉️ {u.email}</p>
+                                            <p className="text-gray-600 mt-1">📞 {u.mobile}</p>
+                                        </div>
+
+                                        <div className="text-sm">
+                                            <p className="font-semibold text-gray-700">🏪 {u.shopName}</p>
+                                            <p className="text-gray-500 mt-1">
+                                                {u.address?.city ? `${u.address.city}, ${u.address.state || ''}` : "No address"}
+                                            </p>
+                                        </div>
+
+                                        <div className="text-sm text-gray-500 md:text-right flex flex-col md:items-end gap-2 pr-2">
+                                            <p>
+                                                {new Date(u._id.getTimestamp ? u._id.getTimestamp() : Date.now()).toLocaleDateString('en-IN', {
+                                                    day: 'numeric', month: 'short', year: 'numeric'
+                                                })}
+                                            </p>
+
+                                            {/* Quick Actions (Stop Propagation to avoid triggering modal) */}
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                {u.role === 'admin' ? (
+                                                    u._id === loggedInAdminId ? (
+                                                        <span className="text-xs font-semibold px-3 py-1.5 text-gray-400 bg-gray-50 border border-transparent rounded-lg cursor-not-allowed">
+                                                            Current User
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleRemoveAdmin(u._id, u.name)}
+                                                            className="text-xs font-semibold px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
+                                                        >
+                                                            Revoke Admin
+                                                        </button>
+                                                    )
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleMakeAdmin(u._id, u.name)}
+                                                        className="text-xs font-semibold px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 mt-1"
+                                                    >
+                                                        Promote to Admin
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    );
+                })()}
 
                 {/* ================= USER DETAILS MODAL ================= */}
                 {selectedUser && (
