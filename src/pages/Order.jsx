@@ -187,6 +187,10 @@ const Order = ({ token }) => {
 
   useEffect(() => setPage(1), [activeStatus]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [page, activeStatus]);
+
   /* ================= STATUS COLOR ================= */
   const statusColor = (status) => {
     if (status === "Delivered") return "text-green-600";
@@ -406,8 +410,8 @@ const Order = ({ token }) => {
                           updatePayment(order._id, !order.payment);
                         }}
                         className={`w-full py-3 rounded-xl font-semibold transition-all ${paymentLocked || paymentUpdating === order._id
-                            ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
-                            : "bg-blue-600 text-white shadow-md hover:shadow-lg hover:bg-blue-700 transform hover:-translate-y-0.5"
+                          ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                          : "bg-blue-600 text-white shadow-md hover:shadow-lg hover:bg-blue-700 transform hover:-translate-y-0.5"
                           }`}
                       >
                         {paymentUpdating === order._id ? "Processing..." : "Toggle Payment"}

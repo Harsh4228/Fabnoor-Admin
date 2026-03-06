@@ -10,6 +10,7 @@ import Login from "./components/Login";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ReelsAdmin from "./pages/ReelsAdmin";
+import ScrollToTop from "./components/ScrollToTop";
 
 const App = () => {
 
@@ -22,6 +23,7 @@ const App = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      <ScrollToTop />
       <ToastContainer />
       {token === ""
         ? <Login setToken={setToken} />
