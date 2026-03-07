@@ -10,6 +10,7 @@ import Login from "./components/Login";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ReelsAdmin from "./pages/ReelsAdmin";
+import GlobalDiscount from "./pages/GlobalDiscount";
 import ScrollToTop from "./components/ScrollToTop";
 
 const App = () => {
@@ -45,6 +46,7 @@ const App = () => {
                   <Route path="/orders" element={<Orders token={token} />} />
                   <Route path="/users" element={<Users token={token} />} />
                   <Route path="/reels" element={<ReelsAdmin token={token} />} />
+                  <Route path="/discount" element={<GlobalDiscount token={token} />} />
                   <Route path="*" element={<List token={token} />} />
                 </Routes>
               </div>

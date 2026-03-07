@@ -15,6 +15,7 @@ const Add = ({ token }) => {
   const [category, setCategory] = useState("");
   const [subCategory, setSubCategory] = useState("");
   const [bestseller, setBestseller] = useState(false);
+  const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   // Auto-complete data
@@ -174,6 +175,7 @@ const Add = ({ token }) => {
       formData.append("category", category);
       formData.append("subCategory", subCategory);
       formData.append("bestseller", bestseller);
+      formData.append("discount", discount);
 
       // ✅ Variants JSON (NO images here)
       formData.append(
@@ -215,6 +217,7 @@ const Add = ({ token }) => {
         setCategory("");
         setSubCategory("");
         setBestseller(false);
+        setDiscount(0);
         setVariants([]);
       } else {
         toast.error(res.data.message);
@@ -475,7 +478,7 @@ const Add = ({ token }) => {
 
         {/* Promotion Section */}
         <div className="admin-card">
-          <div className="p-5 flex items-center justify-between">
+          <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${bestseller ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -496,6 +499,27 @@ const Add = ({ token }) => {
               />
               <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
+
+            <div className="flex items-center gap-3 border-l md:pl-6 border-slate-200">
+              <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center">
+                <span className="font-black text-xs">%</span>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-700">Product Discount</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <input
+                    type="number"
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    className="w-20 py-1 text-xs"
+                  />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">% OFF</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

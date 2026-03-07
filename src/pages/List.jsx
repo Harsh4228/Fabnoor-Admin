@@ -212,6 +212,7 @@ const List = ({ token }) => {
       fd.append("category", editProduct.category);
       fd.append("subCategory", editProduct.subCategory);
       fd.append("bestseller", editProduct.bestseller);
+      fd.append("discount", editProduct.discount || 0);
 
       // ✅ payload must match schema/controller
       const payload = editProduct.variants.map((v) => ({
@@ -391,6 +392,9 @@ const List = ({ token }) => {
                     <p className="text-xl font-black text-slate-900 tracking-tighter">
                       {currency}{formatNumber(Math.min(...(p.variants || []).map((v) => v.price || 0)))}
                     </p>
+                    {p.discount > 0 && (
+                      <p className="text-[10px] font-black text-red-500 uppercase tracking-tighter mt-0.5">-{p.discount}% OFF</p>
+                    )}
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Floor Price</p>
                   </div>
 
@@ -739,7 +743,7 @@ const List = ({ token }) => {
                     </div>
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-2 flex flex-col md:flex-row md:items-center gap-8">
                     <label className="inline-flex items-center gap-3 cursor-pointer group">
                       <div className="relative">
                         <input
@@ -752,6 +756,18 @@ const List = ({ token }) => {
                       </div>
                       <span className="font-bold text-slate-700 text-sm group-hover:text-slate-900 transition-colors">Catalog Highlight (Bestseller)</span>
                     </label>
+
+                    <div className="flex items-center gap-4 pl-8 border-l border-slate-200">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Product Discount (%)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        className="w-20 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:bg-white focus:border-red-500 transition-all font-bold text-red-600 text-xs"
+                        value={editProduct.discount || 0}
+                        onChange={(e) => updateBasic("discount", e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

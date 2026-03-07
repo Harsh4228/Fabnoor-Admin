@@ -42,6 +42,7 @@ const Sidebar = () => {
             { to: '/list', icon: assets.order_icon, label: 'List Items' },
             { to: '/orders', icon: assets.order_icon, label: 'Orders' },
             { to: '/reels', icon: assets.order_icon, label: 'Reels' },
+            { to: '/discount', icon: assets.add_icon, label: 'Global Discount' },
             { to: '/users', icon: assets.parcel_icon, label: 'Users' }
           ].map((item) => (
             <NavLink
@@ -74,6 +75,7 @@ const Sidebar = () => {
             { to: '/list', icon: assets.order_icon, label: 'List Items' },
             { to: '/orders', icon: assets.order_icon, label: 'Orders' },
             { to: '/reels', icon: assets.order_icon, label: 'Reels' },
+            { to: '/discount', icon: assets.add_icon, label: 'Global Discount' },
             { to: '/users', icon: assets.parcel_icon, label: 'Users' }
           ].map((item) => (
             <NavLink
