@@ -9,30 +9,33 @@ const Navbar = ({ setToken }) => {
     setToken("");
   };
   return (
-    <div className='sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm'>
-      <div className='flex items-center py-4 px-4 sm:px-6 md:px-8 lg:px-[4%] justify-between max-w-[1920px] mx-auto'>
-
-        {/* Logo Section */}
-        <div className='flex items-center gap-3'>
-          <img
-            className='w-[max(10%,80px)] sm:w-[max(12%,100px)] h-auto transition-transform hover:scale-105'
-            src={'/logo.png'}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = assets.logo;
-            }}
-            alt="Logo"
-          />
+    <header className='bg-white border-b border-slate-200 py-2.5 px-4 md:px-6 flex items-center justify-between flex-shrink-0 z-40'>
+      {/* Brand / Title section */}
+      <div className='flex items-center gap-3'>
+        <div className='md:hidden'>
+          {/* Mobile menu toggle button placeholder if needed elsewhere */}
         </div>
+        <img
+          className='w-24 sm:w-28 h-auto object-contain'
+          src={'/logo.png'}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = assets.logo;
+          }}
+          alt="Fabnoor Admin"
+        />
+        <div className='hidden sm:block h-6 w-[1.5px] bg-slate-200 mx-2'></div>
+        <p className='hidden sm:block text-slate-500 text-xs font-semibold tracking-widest uppercase'>Admin Panel</p>
+      </div>
 
-        {/* Logout Button */}
+      {/* Action Section */}
+      <div className='flex items-center gap-4'>
         <button
           onClick={() => setShowLogoutModal(true)}
-          className='group relative bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 sm:px-8 sm:py-3 rounded-full text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 flex items-center gap-2'
+          className='inline-flex items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold border border-slate-200 transition-all duration-200 hover:text-red-600 hover:border-red-200'
         >
-          {/* Logout Icon */}
           <svg
-            className='w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1'
+            className='w-4 h-4'
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -44,20 +47,20 @@ const Navbar = ({ setToken }) => {
               d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
             />
           </svg>
-          <span className='font-bold tracking-wide'>Logout</span>
+          <span>Sign Out</span>
         </button>
       </div>
 
       <ConfirmModal
         open={showLogoutModal}
         title="Logout"
-        message="Are you sure you want to logout from the admin panel?"
+        message="Are you sure you want to sign out from the admin dashboard?"
         onConfirm={() => { handleLogout(); setShowLogoutModal(false); }}
         onCancel={() => setShowLogoutModal(false)}
-        confirmText="Yes, Logout"
-        cancelText="Cancel"
+        confirmText="Sign Out"
+        cancelText="Stay logged in"
       />
-    </div>
+    </header>
   )
 }
 

@@ -205,58 +205,58 @@ const Users = ({ token }) => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="mb-8 flex justify-between items-center">
-                    <div>
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                            Registered Users
-                        </h2>
-                        <p className="text-gray-500">Manage customers and their details</p>
+        <div className="fade-in">
+            {/* Page Header Area */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight">User Management</h2>
+                    <p className="text-sm text-slate-500 mt-1">Manage customers, shop profiles, and administrative access</p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Search Bar */}
+                    <div className="relative w-full sm:w-80 group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg className="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search users..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm"
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => setSearchTerm("")}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        )}
                     </div>
+
                     <button
                         onClick={fetchData}
-                        className="flex items-center gap-2 bg-white border-2 border-gray-200 hover:border-blue-400 text-gray-700 hover:text-blue-600 px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-all"
+                        className="flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-blue-300 text-slate-600 hover:text-blue-600 px-4 py-2 rounded-lg font-semibold shadow-sm transition-all text-sm"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                         Refresh
                     </button>
                 </div>
+            </div>
 
-                {/* ================= SEARCH BAR ================= */}
-                <div className="max-w-xl mb-8 relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="Search by name, email, mobile, or shop..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3.5 bg-white border-2 border-transparent rounded-2xl shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all text-sm font-medium"
-                    />
-                    {searchTerm && (
-                        <button
-                            onClick={() => setSearchTerm("")}
-                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" />
-                            </svg>
-                        </button>
-                    )}
-                </div>
-
-                {/* USERS LIST */}
+            {/* USERS LIST */}
+            <div className="admin-card">
                 {loading ? (
-                    <div className="flex justify-center p-12">
-                        <div className="w-10 h-10 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+                    <div className="p-20 flex justify-center">
+                        <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
                     </div>
                 ) : (() => {
                     const filteredUsers = users.filter((u) => {
@@ -271,105 +271,112 @@ const Users = ({ token }) => {
 
                     if (filteredUsers.length === 0) {
                         return (
-                            <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
-                                <p className="text-xl font-semibold text-gray-400">
-                                    {searchTerm ? `No results for "${searchTerm}"` : "No users found"}
-                                </p>
+                            <div className="p-20 text-center text-slate-400">
+                                <p className="font-medium text-lg mb-2">No users found</p>
+                                <p className="text-sm">Try adjusting your search criteria</p>
                             </div>
                         );
                     }
 
                     return (
-                        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-                            {/* Desktop Header */}
-                            <div className="hidden md:grid md:grid-cols-[200px_1.5fr_1fr_1fr] gap-4 p-6 bg-blue-50/80 text-blue-900 border-b border-blue-100 font-bold">
-                                <div>Name</div>
-                                <div>Contact Details</div>
-                                <div>Shop / Role</div>
-                                <div className="text-right">Joined</div>
-                            </div>
-
-                            <div className="divide-y divide-gray-100">
-                                {filteredUsers.map((u) => (
-                                    <div
-                                        key={u._id}
-                                        className="grid grid-cols-1 md:grid-cols-[200px_1.5fr_1fr_1fr] gap-2 md:gap-4 p-4 md:p-6 items-center hover:bg-gray-50 transition-colors cursor-pointer group"
-                                        onClick={() => handleUserClick(u)}
-                                    >
-                                        <div className="font-bold text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
-                                            {u.name}
-                                            {u.role === 'admin' && (
-                                                <span className="ml-2 inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">Admin</span>
-                                            )}
-                                        </div>
-
-                                        <div className="text-sm">
-                                            <p className="text-gray-800 font-medium">✉️ {u.email}</p>
-                                            <p className="text-gray-600 mt-1">📞 {u.mobile}</p>
-                                        </div>
-
-                                        <div className="text-sm">
-                                            <p className="font-semibold text-gray-700">🏪 {u.shopName}</p>
-                                            <p className="text-gray-500 mt-1">
-                                                {u.address?.city ? `${u.address.city}, ${u.address.state || ''}` : "No address"}
-                                            </p>
-                                        </div>
-
-                                        <div className="text-sm text-gray-500 md:text-right flex flex-col md:items-end gap-2 pr-2">
-                                            <p>
-                                                {new Date(u._id.getTimestamp ? u._id.getTimestamp() : Date.now()).toLocaleDateString('en-IN', {
-                                                    day: 'numeric', month: 'short', year: 'numeric'
-                                                })}
-                                            </p>
-
-                                            {/* Quick Actions (Stop Propagation to avoid triggering modal) */}
-                                            <div onClick={(e) => e.stopPropagation()}>
-                                                {u.role === 'admin' ? (
-                                                    u._id === loggedInAdminId ? (
-                                                        <span className="text-xs font-semibold px-3 py-1.5 text-gray-400 bg-gray-50 border border-transparent rounded-lg cursor-not-allowed">
-                                                            Current User
-                                                        </span>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[900px]">
+                                <thead>
+                                    <tr className="bg-slate-50/80 border-b border-slate-200">
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">User Profile</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Contact Details</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Shop & Role</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Activity</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {filteredUsers.map((u) => (
+                                        <tr
+                                            key={u._id}
+                                            className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                                            onClick={() => handleUserClick(u)}
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shadow-inner border border-blue-100">
+                                                        {u.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-900 line-clamp-1">{u.name}</p>
+                                                        <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide">{u._id.slice(-8)}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="text-sm font-medium text-slate-700">✉️ {u.email}</p>
+                                                <p className="text-xs text-slate-500 mt-0.5">📞 {u.mobile}</p>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex flex-col items-center gap-1.5">
+                                                    <span className="text-xs font-semibold text-slate-700">{u.shopName || "Personal"}</span>
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight ${u.role === 'admin' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
+                                                        {u.role}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Joined</p>
+                                                <p className="text-xs text-slate-400 mt-0.5">
+                                                    {new Date(u.createdAt || (u._id.getTimestamp ? u._id.getTimestamp() : Date.now())).toLocaleDateString('en-IN', {
+                                                        day: 'numeric', month: 'short', year: 'numeric'
+                                                    })}
+                                                </p>
+                                            </td>
+                                            <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    {u.role === 'admin' ? (
+                                                        u._id === loggedInAdminId ? (
+                                                            <span className="text-[10px] font-bold px-3 py-1 bg-slate-100 text-slate-400 rounded-lg">YOU</span>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleRemoveAdmin(u._id, u.name)}
+                                                                className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 rounded-lg text-[10px] font-bold transition-all"
+                                                            >
+                                                                REVOKE
+                                                            </button>
+                                                        )
                                                     ) : (
                                                         <button
-                                                            onClick={() => handleRemoveAdmin(u._id, u.name)}
-                                                            className="text-xs font-semibold px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100"
+                                                            onClick={() => handleMakeAdmin(u._id, u.name)}
+                                                            className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100 rounded-lg text-[10px] font-bold transition-all"
                                                         >
-                                                            Revoke Admin
+                                                            PROMOTE
                                                         </button>
-                                                    )
-                                                ) : (
-                                                    <button
-                                                        onClick={() => handleMakeAdmin(u._id, u.name)}
-                                                        className="text-xs font-semibold px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100 mt-1"
-                                                    >
-                                                        Promote to Admin
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     );
                 })()}
 
                 {/* ================= USER DETAILS MODAL ================= */}
                 {selectedUser && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[60] p-2 sm:p-4">
-                        <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl flex flex-col max-h-[96vh]">
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[60] p-4">
+                        <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
                             {/* Header */}
-                            <div className="bg-blue-600 text-white p-6 rounded-t-3xl flex-shrink-0 relative overflow-hidden shadow-md">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-
+                            <div className="bg-slate-900 text-white p-6 flex-shrink-0 relative overflow-hidden shadow-lg">
                                 <div className="flex justify-between items-start relative z-10">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 rounded-full bg-white/20 flex flex-shrink-0 items-center justify-center text-2xl font-bold shadow-inner">
+                                        <div className="w-16 h-16 rounded-2xl bg-white/10 flex flex-shrink-0 items-center justify-center text-2xl font-black shadow-inner border border-white/5">
                                             {selectedUser.name.charAt(0).toUpperCase()}
                                         </div>
                                         <div>
-                                            <h2 className="text-2xl sm:text-3xl font-bold">{selectedUser.name}</h2>
-                                            <p className="text-blue-100 opacity-90">{selectedUser.email} | {selectedUser.mobile}</p>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="px-2 py-0.5 bg-blue-500 text-[10px] font-black uppercase tracking-widest rounded">User Profile</span>
+                                                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">ID: {selectedUser._id.slice(-8)}</span>
+                                            </div>
+                                            <h2 className="text-2xl font-bold tracking-tight">{selectedUser.name}</h2>
+                                            <p className="text-slate-400 text-sm font-medium mt-1">{selectedUser.email} • {selectedUser.mobile}</p>
                                         </div>
                                     </div>
                                     <button onClick={() => setSelectedUser(null)} className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all">
@@ -379,19 +386,19 @@ const Users = ({ token }) => {
 
                                 {/* Tabs */}
                                 {userDetails && (
-                                    <div className="flex overflow-x-auto gap-2 mt-8 -mb-2 relative z-10 hide-scrollbar pb-2">
+                                    <div className="flex overflow-x-auto gap-4 mt-8 -mb-1 relative z-10 no-scrollbar">
                                         {[
-                                            { id: 'profile', label: 'Overview' },
-                                            { id: 'orders', label: `Orders (${userDetails.orders?.length || 0})` },
-                                            { id: 'cart', label: `Cart (${Object.keys(userDetails.user?.cartData || {}).length})` },
-                                            { id: 'wishlist', label: `Wishlist (${userDetails.user?.wishlist?.length || 0})` }
+                                            { id: 'profile', label: 'OVERVIEW' },
+                                            { id: 'orders', label: `ORDERS (${userDetails.orders?.length || 0})` },
+                                            { id: 'cart', label: `CART (${Object.keys(userDetails.user?.cartData || {}).length})` },
+                                            { id: 'wishlist', label: `WISHLIST (${userDetails.user?.wishlist?.length || 0})` }
                                         ].map(tab => (
                                             <button
                                                 key={tab.id}
                                                 onClick={() => setActiveTab(tab.id)}
-                                                className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all whitespace-nowrap ${activeTab === tab.id
-                                                    ? 'bg-white text-blue-700 shadow-md'
-                                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                                className={`px-2 py-3 font-black text-[10px] tracking-widest transition-all whitespace-nowrap border-b-2 ${activeTab === tab.id
+                                                    ? 'border-blue-500 text-blue-400'
+                                                    : 'border-transparent text-slate-500 hover:text-slate-300'
                                                     }`}
                                             >
                                                 {tab.label}
@@ -402,122 +409,133 @@ const Users = ({ token }) => {
                             </div>
 
                             {/* Body */}
-                            <div className="p-6 overflow-y-auto flex-1 bg-gray-50/50">
+                            <div className="p-8 overflow-y-auto flex-1 bg-slate-50/50 scrollbar-thin">
                                 {detailsLoading ? (
-                                    <div className="flex justify-center items-center h-40">
-                                        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                                    <div className="flex flex-col justify-center items-center h-64 gap-4">
+                                        <div className="w-12 h-12 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Retrieving User Data...</p>
                                     </div>
                                 ) : userDetails ? (
-                                    <div className="animate-fade-in">
+                                    <div className="animate-in fade-in duration-300">
 
                                         {/* TAB: PROFILE */}
                                         {activeTab === 'profile' && (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Account Information</h3>
-                                                    <div className="space-y-4">
-                                                        <div>
-                                                            <p className="text-gray-500 text-sm">Shop Name</p>
-                                                            <p className="font-semibold text-gray-800 text-lg">{userDetails.user.shopName}</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="space-y-8">
+                                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                                        <div className="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
+                                                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                                            </div>
+                                                            <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs">Primary Information</h3>
                                                         </div>
-                                                        <div className="grid grid-cols-2 gap-4">
+                                                        <div className="space-y-6">
                                                             <div>
-                                                                <p className="text-gray-500 text-sm">Role</p>
-                                                                <p className="font-semibold text-gray-800 capitalize">
-                                                                    {userDetails.user.role}
-                                                                    {userDetails.user.role === 'admin' && (
-                                                                        <span className="ml-2 inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">Admin Access</span>
-                                                                    )}
-                                                                </p>
+                                                                <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Business / Shop Identity</p>
+                                                                <p className="font-bold text-slate-900 text-lg">{userDetails.user.shopName || "Personal Account"}</p>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-6">
+                                                                <div>
+                                                                    <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Access Level</p>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <p className="font-bold text-slate-800 capitalize">{userDetails.user.role}</p>
+                                                                        {userDetails.user.role === 'admin' && (
+                                                                            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter shadow-sm border border-blue-200">Internal Staff</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Gender Identity</p>
+                                                                    <p className="font-bold text-slate-800">{userDetails.user.gender || 'N/A'}</p>
+                                                                </div>
                                                             </div>
                                                             <div>
-                                                                <p className="text-gray-500 text-sm">Gender</p>
-                                                                <p className="font-semibold text-gray-800">{userDetails.user.gender || 'Not specified'}</p>
+                                                                <p className="text-slate-400 text-[10px] font-bold uppercase mb-1">Date of Birth</p>
+                                                                <p className="font-bold text-slate-800">{userDetails.user.dob || 'Not registered'}</p>
                                                             </div>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 text-sm">Date of Birth</p>
-                                                            <p className="font-semibold text-gray-800">{userDetails.user.dob || 'Not specified'}</p>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="flex flex-col gap-6">
-                                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Saved Address</h3>
+                                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                                        <div className="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
+                                                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /></svg>
+                                                            </div>
+                                                            <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs">Saved Logistics Entry</h3>
+                                                        </div>
                                                         {userDetails.user.address?.street ? (
-                                                            <div className="space-y-2 text-gray-700">
-                                                                <p className="font-medium">{userDetails.user.address.street}</p>
+                                                            <div className="space-y-1.5 text-slate-700 text-xs font-medium leading-relaxed">
+                                                                <p className="font-bold text-slate-900 border-b border-slate-50 pb-2 mb-2">{userDetails.user.address.street}</p>
                                                                 <p>{userDetails.user.address.city}, {userDetails.user.address.state}</p>
-                                                                <p>{userDetails.user.address.zipcode}</p>
+                                                                <p className="text-slate-900 font-bold">{userDetails.user.address.zipcode}</p>
                                                                 <p>{userDetails.user.address.country}</p>
                                                             </div>
                                                         ) : (
-                                                            <p className="text-gray-500 italic">No address provided.</p>
+                                                            <div className="h-24 flex items-center justify-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                                                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">No primary address found</p>
+                                                            </div>
                                                         )}
                                                     </div>
+                                                </div>
 
-                                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 bg-blue-50/30">
-                                                        <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Admin Controls</h3>
+                                                <div className="space-y-8">
+                                                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                                                        <div className="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
+                                                            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100 4m0-4a2 2 0 110 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100 4m0-4a2 2 0 110 4m0-4v2m0-6V4" /></svg>
+                                                            </div>
+                                                            <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs">Administrative Policy</h3>
+                                                        </div>
 
                                                         {userDetails.user.role === 'admin' ? (
-                                                            <>
-                                                                <p className="text-sm text-gray-600 mb-4 bg-gray-100 p-3 rounded-lg border border-gray-200 text-center font-medium">
-                                                                    🛡️ This user is already an Admin.
-                                                                </p>
+                                                            <div className="space-y-4">
+                                                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
+                                                                    <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">🛡️ High Privilege Account</p>
+                                                                </div>
                                                                 {userDetails.user._id === loggedInAdminId ? (
-                                                                    <button
-                                                                        disabled
-                                                                        className="w-full font-semibold py-2.5 rounded-xl shadow-sm text-gray-500 bg-gray-200 cursor-not-allowed"
-                                                                    >
-                                                                        You cannot revoke your own access
-                                                                    </button>
+                                                                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Self-Modification Disabled</p>
+                                                                    </div>
                                                                 ) : (
                                                                     <button
                                                                         onClick={() => handleRemoveAdmin(userDetails.user._id, userDetails.user.name)}
                                                                         disabled={makeAdminLoading}
-                                                                        className={`w-full font-semibold py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 mb-4 ${makeAdminLoading ? "bg-red-300 text-white cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"
+                                                                        className={`w-full font-black text-[11px] py-3.5 rounded-xl transition-all shadow-md uppercase tracking-widest border ${makeAdminLoading ? "bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed" : "bg-white border-red-200 text-red-600 hover:bg-red-50"
                                                                             }`}
                                                                     >
-                                                                        {makeAdminLoading ? "Revoking..." : "Revoke Admin Access"}
+                                                                        {makeAdminLoading ? "Revoking..." : "Remove Staff Access"}
                                                                     </button>
                                                                 )}
-                                                            </>
+                                                            </div>
                                                         ) : (
-                                                            <>
-                                                                <p className="text-sm text-gray-600 mb-4">Promoting this user will grant them full access to the admin dashboard.</p>
+                                                            <div className="space-y-4">
+                                                                <p className="text-[10px] font-bold text-slate-400 leading-relaxed uppercase tracking-tight">Warning: Promoting this user will grant full access to sensitive business logic, order management, and catalog indexing.</p>
                                                                 <button
                                                                     onClick={() => handleMakeAdmin(userDetails.user._id, userDetails.user.name)}
                                                                     disabled={makeAdminLoading}
-                                                                    className={`w-full font-semibold py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 mb-4 ${makeAdminLoading ? "bg-blue-300 text-white cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 text-white"
+                                                                    className={`w-full font-black text-[11px] py-3.5 rounded-xl transition-all shadow-lg uppercase tracking-widest text-white ${makeAdminLoading ? "bg-blue-400 cursor-not-allowed" : "bg-slate-900 hover:bg-slate-800"
                                                                         }`}
                                                                 >
-                                                                    {makeAdminLoading ? (
-                                                                        <>
-                                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                                                            Assigning Admin...
-                                                                        </>
-                                                                    ) : "Make User Admin"}
+                                                                    {makeAdminLoading ? "Synchronizing Policy..." : "Grant Administrator Access"}
                                                                 </button>
-                                                            </>
+                                                            </div>
                                                         )}
                                                     </div>
 
-                                                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-red-100 bg-red-50/30">
-                                                        <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-2">Danger Zone</h3>
-                                                        <p className="text-sm text-gray-600 mb-4">Deleting this user will permanently remove their account and all associated data.</p>
+                                                    <div className="bg-red-50/20 p-6 rounded-2xl border border-red-100">
+                                                        <div className="flex items-center gap-2 mb-4">
+                                                            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                            </div>
+                                                            <h3 className="font-bold text-red-900 uppercase tracking-wider text-[10px]">Restricted Zone</h3>
+                                                        </div>
                                                         <button
                                                             onClick={() => handleDeleteUser(userDetails.user._id, userDetails.user.name)}
                                                             disabled={deleteLoading}
-                                                            className={`w-full font-semibold py-2.5 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2 ${deleteLoading ? "bg-red-300 text-white cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"
+                                                            className={`w-full font-black text-[10px] py-3.5 rounded-xl transition-colors uppercase tracking-widest border ${deleteLoading ? "bg-red-100 text-red-300 border-red-100 cursor-not-allowed" : "bg-white border-red-200 text-red-600 hover:bg-red-500 hover:text-white"
                                                                 }`}
                                                         >
-                                                            {deleteLoading ? (
-                                                                <>
-                                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                                                    Deleting...
-                                                                </>
-                                                            ) : "Delete User"}
+                                                            {deleteLoading ? "Permanently Erasing..." : "Purge User Profile"}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -526,41 +544,40 @@ const Users = ({ token }) => {
 
                                         {/* TAB: ORDERS */}
                                         {activeTab === 'orders' && (
-                                            <div>
+                                            <div className="space-y-6">
                                                 {userDetails.orders?.length === 0 ? (
-                                                    <div className="text-center py-10">
-                                                        <p className="text-gray-500">No orders placed by this user.</p>
+                                                    <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 border-dashed">
+                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No order interactions recorded</p>
                                                     </div>
                                                 ) : (
-                                                    <div className="space-y-4">
+                                                    <div className="grid grid-cols-1 gap-4">
                                                         {userDetails.orders.map(order => (
                                                             <div
                                                                 key={order._id}
-                                                                className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col md:flex-row gap-4 justify-between items-start md:items-center"
+                                                                className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer flex flex-col md:flex-row gap-6 justify-between items-start md:items-center group"
                                                                 onClick={() => setViewOrder(order)}
                                                             >
-                                                                <div>
-                                                                    <div className="flex items-center gap-2 mb-1">
-                                                                        <span className="font-bold text-gray-900">{order.orderNumber || order._id.slice(-6).toUpperCase()}</span>
-                                                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-3 mb-2">
+                                                                        <span className="font-black text-slate-900 text-sm tracking-tight">{order.orderNumber || order._id.slice(-8).toUpperCase()}</span>
+                                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
                                                                             order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
                                                                                 'bg-blue-100 text-blue-700'
                                                                             }`}>
                                                                             {order.status}
                                                                         </span>
                                                                     </div>
-                                                                    <p className="text-sm text-gray-500">
-                                                                        {new Date(order.createdAt).toLocaleDateString('en-IN', {
-                                                                            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                                                                        })}
-                                                                    </p>
-                                                                    <p className="text-sm text-gray-600 mt-2">
-                                                                        {order.items.length} items • {order.paymentMethod} ({order.payment ? 'Paid' : 'Unpaid'})
-                                                                    </p>
+                                                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold text-slate-500 uppercase tracking-wide">
+                                                                        <p className="flex items-center gap-1.5"><span className="text-slate-300">📅</span> {new Date(order.createdAt).toLocaleDateString()}</p>
+                                                                        <p className="flex items-center gap-1.5"><span className="text-slate-300">📦</span> {order.items.length} Units</p>
+                                                                        <p className="flex items-center gap-1.5"><span className="text-slate-300">💳</span> {order.paymentMethod} ({order.payment ? 'PAID' : 'PENDING'})</p>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="text-right">
-                                                                    <p className="text-xl font-bold text-gray-900">{currency}{formatNumber(order.amount)}</p>
-                                                                    <button className="text-blue-600 text-sm font-semibold mt-2 hover:underline">View Details →</button>
+                                                                <div className="text-right flex items-center gap-6">
+                                                                    <p className="text-xl font-black text-slate-900">{currency}{formatNumber(order.amount)}</p>
+                                                                    <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -573,16 +590,15 @@ const Users = ({ token }) => {
                                         {activeTab === 'cart' && (
                                             <div>
                                                 {Object.keys(userDetails.user.cartData || {}).length === 0 ? (
-                                                    <div className="text-center py-10">
-                                                        <p className="text-gray-500">Cart is empty.</p>
+                                                    <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 border-dashed">
+                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Active cart is hollow</p>
                                                     </div>
                                                 ) : (
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                                         {Object.entries(userDetails.user.cartData).map(([cartKey, cartValue]) => {
                                                             let productId, color, type, code, sizeArr;
                                                             let totalQty = 0;
 
-                                                            // Handle structural differences 
                                                             if (cartKey.includes("::")) {
                                                                 const [pid, c, t, cd] = cartKey.split("::");
                                                                 productId = pid;
@@ -595,7 +611,6 @@ const Users = ({ token }) => {
                                                                 color = "";
                                                                 type = "";
                                                                 code = "";
-                                                                // cartValue might be { "S": 2, "M": 1 }
                                                                 if (typeof cartValue === 'object' && cartValue !== null) {
                                                                     totalQty = Object.values(cartValue).reduce((acc, q) => acc + Number(q), 0);
                                                                     sizeArr = Object.entries(cartValue).filter(([s, q]) => Number(q) > 0).map(([s]) => s);
@@ -605,7 +620,6 @@ const Users = ({ token }) => {
                                                             const product = getProductById(productId);
                                                             if (!product || totalQty <= 0) return null;
 
-                                                            // Try to match variant to get the correct thumbnail
                                                             const variants = product.variants || [];
                                                             let matchedVariant = code ? variants.find(v => v.code === code) : null;
                                                             if (!matchedVariant) matchedVariant = variants.find(v => v.color === color && (v.type === type || v.fabric === type)) || variants[0];
@@ -615,27 +629,29 @@ const Users = ({ token }) => {
                                                             return (
                                                                 <div
                                                                     key={cartKey}
-                                                                    className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-300 transition-colors"
+                                                                    className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-400 transition-all group"
                                                                     onClick={() => setViewProduct(product)}
                                                                 >
-                                                                    <img
-                                                                        src={thumbnail}
-                                                                        alt={product.name}
-                                                                        className="w-16 h-16 object-cover rounded-xl"
-                                                                    />
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="font-semibold text-gray-800 truncate">{product.name}</p>
-                                                                        {color && (
-                                                                            <p className="text-xs text-gray-500 mt-0.5">
-                                                                                {color} {code ? `(${code})` : ''}
-                                                                            </p>
-                                                                        )}
-                                                                        <div className="flex items-center justify-between mt-1">
-                                                                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-md font-medium">
-                                                                                {sizeArr ? sizeArr.join(", ") : matchedVariant?.sizes?.join(", ") || "Full Set"}
-                                                                            </span>
-                                                                            <span className="text-sm font-bold text-gray-900">Qty: {totalQty}</span>
+                                                                    <div className="relative flex-shrink-0">
+                                                                        <img
+                                                                            src={thumbnail}
+                                                                            alt={product.name}
+                                                                            className="w-20 h-20 object-cover rounded-xl shadow-sm border border-slate-100"
+                                                                        />
+                                                                        <div className="absolute -top-2 -right-2 bg-slate-900 text-white w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shadow-lg">
+                                                                            {totalQty}
                                                                         </div>
+                                                                    </div>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="font-bold text-slate-800 text-sm truncate group-hover:text-blue-600 transition-colors">{product.name}</p>
+                                                                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{color || 'Config-1'}</span>
+                                                                            <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                                                                            <span className="text-[9px] font-black text-blue-500 uppercase tracking-tighter">{sizeArr ? sizeArr.join("/") : matchedVariant?.sizes?.join("/") || "SET"}</span>
+                                                                        </div>
+                                                                        <p className="text-[10px] font-black text-slate-900 mt-2 font-mono">
+                                                                            {currency}{formatNumber(matchedVariant?.price || 0)}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                             );
@@ -649,13 +665,12 @@ const Users = ({ token }) => {
                                         {activeTab === 'wishlist' && (
                                             <div>
                                                 {(!userDetails.user.wishlist || userDetails.user.wishlist.length === 0) ? (
-                                                    <div className="text-center py-10">
-                                                        <p className="text-gray-500">Wishlist is empty.</p>
+                                                    <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 border-dashed">
+                                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Wishlist is void</p>
                                                     </div>
                                                 ) : (
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                                         {userDetails.user.wishlist.map((item, index) => {
-                                                            // Assuming item structure handles backwards compatibility for string ids vs object
                                                             const productId = typeof item === 'string' ? item : item.productId;
                                                             const product = getProductById(productId);
                                                             if (!product) return null;
@@ -663,26 +678,20 @@ const Users = ({ token }) => {
                                                             return (
                                                                 <div
                                                                     key={index}
-                                                                    className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-300 transition-colors group"
+                                                                    className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 cursor-pointer hover:border-blue-400 transition-all group"
                                                                     onClick={() => setViewProduct(product)}
                                                                 >
                                                                     <img
                                                                         src={product.variants?.[0]?.images?.[0] || ''}
                                                                         alt={product.name}
-                                                                        className="w-16 h-16 object-cover rounded-xl"
+                                                                        className="w-20 h-20 object-cover rounded-xl shadow-sm border border-slate-100 flex-shrink-0"
                                                                     />
                                                                     <div className="flex-1 min-w-0">
-                                                                        <p className="font-semibold text-gray-800 truncate group-hover:text-blue-600 transition-colors">{product.name}</p>
-                                                                        <div className="mt-1 flex items-center gap-2 text-xs font-semibold">
-                                                                            {item.color && (
-                                                                                <span className="text-gray-500">
-                                                                                    Color: {item.color}
-                                                                                </span>
-                                                                            )}
-                                                                            <span className="text-gray-900">
-                                                                                {currency}{Math.min(...(product.variants || []).map(v => v.price || 0))}
-                                                                            </span>
-                                                                        </div>
+                                                                        <p className="font-bold text-slate-800 text-sm truncate group-hover:text-blue-600 transition-colors">{product.name}</p>
+                                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{product.category}</p>
+                                                                        <p className="text-[10px] font-black text-slate-900 mt-2 font-mono">
+                                                                            ENTRY LIMIT: {currency}{formatNumber(Math.min(...(product.variants || []).map(v => v.price || 0)))}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                             )
@@ -694,7 +703,9 @@ const Users = ({ token }) => {
 
                                     </div>
                                 ) : (
-                                    <div className="text-center p-8 text-red-500">Failed to load details.</div>
+                                    <div className="text-center p-20 bg-white rounded-2xl border border-red-100">
+                                        <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Protocol Deviation: Failed to synchronize details</p>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -702,122 +713,155 @@ const Users = ({ token }) => {
                 )}
 
                 {/* ================= REUSED PRODUCT MODAL ================= */}
-                {/* We can re-use the exact same modal structure from List.jsx for displaying a product */}
                 {viewProduct && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[70] p-4">
-                        <div className="bg-white max-w-4xl w-full rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto">
-                            <div className="sticky top-0 bg-blue-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center shadow-md">
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[70] p-4">
+                        <div className="bg-white max-w-4xl w-full rounded-2xl shadow-2xl max-h-[92vh] overflow-hidden flex flex-col">
+                            {/* Header */}
+                            <div className="bg-slate-900 text-white p-6 shadow-lg z-10 flex justify-between items-center">
                                 <div>
-                                    <h2 className="text-2xl font-bold">{viewProduct.name}</h2>
-                                    <div className="flex gap-2 mt-2">
-                                        <span className="bg-blue-500/50 text-white px-3 py-1 rounded-full text-xs font-bold">{viewProduct.category}</span>
+                                    <h2 className="text-xl font-bold tracking-tight">{viewProduct.name}</h2>
+                                    <div className="flex gap-2 mt-1">
+                                        <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">{viewProduct.category}</span>
                                     </div>
                                 </div>
                                 <button onClick={() => setViewProduct(null)} className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all">✕</button>
                             </div>
 
-                            <div className="p-6 space-y-6">
-                                <div>
-                                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">Variants</p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {(viewProduct.variants || []).map((v, i) => (
-                                            <div key={i} className="border-2 border-gray-100 rounded-2xl p-4">
-                                                <div className="flex gap-2 mb-3 overflow-x-auto">
-                                                    {(v.images || []).map((img, ii) => (
-                                                        <img key={ii} src={img} className="w-16 h-16 object-cover rounded-xl border border-gray-100 flex-shrink-0" alt="" />
-                                                    ))}
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                                    <div><p className="text-gray-400 text-xs">Color</p><p className="font-semibold">{v.color}</p></div>
-                                                    <div><p className="text-gray-400 text-xs">Price</p><p className="font-bold">{currency}{v.price}</p></div>
-                                                    <div>
-                                                        <p className="text-gray-400 text-xs mt-1">Sizes (Set)</p>
-                                                        <div className="flex gap-1 flex-wrap mt-0.5">
-                                                            {(v.sizes || []).map(s => (
-                                                                <span key={s} className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-[10px] font-bold">{s}</span>
-                                                            ))}
+                            <div className="p-8 overflow-y-auto flex-1 bg-slate-50/50 scrollbar-thin">
+                                <div className="space-y-8">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
+                                            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                                            </div>
+                                            <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs">Catalog Variants</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                            {(viewProduct.variants || []).map((v, i) => (
+                                                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                                                    <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-1">
+                                                        {(v.images || []).map((img, ii) => (
+                                                            <img key={ii} src={img} className="w-20 h-20 object-cover rounded-xl border border-slate-100 flex-shrink-0 shadow-sm" alt="" />
+                                                        ))}
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest">Colorway</p>
+                                                            <p className="font-bold text-slate-800 text-sm">{v.color}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest">Entry Price</p>
+                                                            <p className="font-black text-blue-600 text-sm">{currency}{v.price}</p>
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-2">Available Size Matrix</p>
+                                                            <div className="flex gap-1.5 flex-wrap">
+                                                                {(v.sizes || []).map(s => (
+                                                                    <span key={s} className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[9px] font-black border border-slate-200">{s}</span>
+                                                                ))}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
+                                    <button
+                                        onClick={() => setViewProduct(null)}
+                                        className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition shadow-xl"
+                                    >
+                                        TERMINATE VIEW
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setViewProduct(null)}
-                                    className="w-full bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold hover:bg-gray-200 transition"
-                                >
-                                    Close Product
-                                </button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* ================= ORDER DETAILS MODAL ================= */}
+                {/* ================= ORDER DETAILS SNAPSHOT ================= */}
                 {viewOrder && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[70] p-4">
-                        <div className="bg-white max-w-2xl w-full rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col">
-                            <div className="sticky top-0 bg-blue-600 text-white p-6 rounded-t-3xl z-10 flex justify-between items-center shadow-md">
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[70] p-4">
+                        <div className="bg-white max-w-2xl w-full rounded-2xl shadow-2xl max-h-[92vh] overflow-hidden flex flex-col">
+                            {/* Header */}
+                            <div className="bg-slate-900 text-white p-6 shadow-lg z-10 flex justify-between items-center">
                                 <div>
-                                    <h2 className="text-xl font-bold">Order Details</h2>
-                                    <p className="text-blue-100 text-sm mt-1">{viewOrder.orderNumber || viewOrder._id}</p>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="px-2 py-0.5 bg-blue-500 text-[10px] font-black uppercase tracking-widest rounded">Snapshot View</span>
+                                        <h2 className="text-lg font-bold tracking-tight">Order Reference</h2>
+                                    </div>
+                                    <p className="text-slate-400 text-xs font-bold font-mono tracking-tighter">{viewOrder.orderNumber || viewOrder._id}</p>
                                 </div>
                                 <button onClick={() => setViewOrder(null)} className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-all">✕</button>
                             </div>
 
-                            <div className="p-6 space-y-6">
-                                {/* Order Basics */}
-                                <div className="bg-gray-50 rounded-2xl p-4 flex justify-between items-center">
-                                    <div>
-                                        <p className="text-sm text-gray-500">Status</p>
-                                        <p className="font-bold text-gray-900">{viewOrder.status}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Payment</p>
-                                        <p className="font-bold text-gray-900">{viewOrder.paymentMethod} {viewOrder.payment ? '(Paid)' : '(Unpaid)'}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-sm text-gray-500">Total Amount</p>
-                                        <p className="text-xl font-bold text-gray-900">{currency}{formatNumber(viewOrder.amount)}</p>
-                                    </div>
-                                </div>
-
-                                {/* Order Items */}
-                                <div>
-                                    <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">Items Purchased</h3>
-                                    <div className="space-y-4">
-                                        {viewOrder.items.map((item, idx) => (
-                                            <div key={idx} className="flex gap-4">
-                                                <img src={item.image} className="w-20 h-20 object-cover rounded-xl shadow-sm border" alt="" />
-                                                <div>
-                                                    <p className="font-bold text-gray-900">{item.name}</p>
-                                                    <p className="text-sm text-gray-600 mt-1">
-                                                        Color: {item.color} | Qty: {item.quantity}
-                                                    </p>
-                                                    <div className="mt-1 flex gap-1 flex-wrap">
-                                                        {item.size.map(s => (
-                                                            <span key={s} className="bg-gray-100 px-2 py-0.5 rounded text-xs font-semibold text-gray-700">{s}</span>
-                                                        ))}
-                                                    </div>
-                                                    <p className="font-bold text-gray-900 mt-1">{currency}{item.price}</p>
-                                                </div>
+                            <div className="p-8 overflow-y-auto flex-1 bg-slate-50/50 scrollbar-thin">
+                                <div className="space-y-8">
+                                    {/* Order Basics */}
+                                    <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm grid grid-cols-2 gap-6 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                                            <svg className="w-16 h-16 text-slate-900" fill="currentColor" viewBox="0 0 24 24"><path d="M20 7h-4V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 5h4v2h-4V5zm10 15H4V9h16v11z" /></svg>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest">Processing Phase</p>
+                                                <p className="font-black text-slate-900 text-sm mt-0.5">{viewOrder.status}</p>
                                             </div>
-                                        ))}
+                                            <div>
+                                                <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest">Payment Logic</p>
+                                                <p className="font-bold text-slate-800 text-sm mt-0.5">{viewOrder.paymentMethod} {viewOrder.payment ? '(PAID)' : '(PENDING)'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right flex flex-col justify-center">
+                                            <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest">Total Valuation</p>
+                                            <p className="text-3xl font-black text-blue-600 tracking-tighter mt-1">{currency}{formatNumber(viewOrder.amount)}</p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <button
-                                    onClick={() => setViewOrder(null)}
-                                    className="w-full bg-gray-100 text-gray-700 py-3 rounded-2xl font-bold hover:bg-gray-200 transition"
-                                >
-                                    Close Order
-                                </button>
+                                    {/* Order Items */}
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
+                                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                                            </div>
+                                            <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs">Acquisition Manifest</h3>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {viewOrder.items.map((item, idx) => (
+                                                <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex gap-4 group">
+                                                    <img src={item.image} className="w-20 h-20 object-cover rounded-xl shadow-sm border border-slate-100" alt="" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-slate-900 text-sm truncate">{item.name}</p>
+                                                        <div className="mt-1 flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                                                            <span>{item.color}</span>
+                                                            <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                                                            <span>QTY: {item.quantity}</span>
+                                                        </div>
+                                                        <div className="mt-2 flex gap-1 flex-wrap">
+                                                            {item.size.map(s => (
+                                                                <span key={s} className="bg-blue-50 px-2 py-0.5 rounded text-[9px] font-black text-blue-600 border border-blue-100">{s}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right flex flex-col justify-center">
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Unit</p>
+                                                        <p className="font-black text-slate-900">{currency}{formatNumber(item.price)}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setViewOrder(null)}
+                                        className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition shadow-xl uppercase tracking-widest text-[11px]"
+                                    >
+                                        TERMINATE SNAPSHOT
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 )}
-
             </div>
         </div>
     );

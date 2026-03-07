@@ -22,28 +22,35 @@ const App = () => {
 
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-slate-50 min-h-screen">
       <ScrollToTop />
-      <ToastContainer />
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
       {token === ""
         ? <Login setToken={setToken} />
-        : <>
-          <Navbar setToken={setToken} />
-          <hr />
-          <div className="flex w-full">
+        : <div className="flex h-screen overflow-hidden">
+          {/* Standard Fixed Sidebar */}
+          <div className="flex-shrink-0">
             <Sidebar />
-            <div className="w-[70%] mx-auto ml-[max(5vw,25px)] my-8 text-gray-600 text-base">
-              <Routes>
-                <Route path="/add" element={<Add token={token} />} />
-                <Route path="/list" element={<List token={token} />} />
-                <Route path="/orders" element={<Orders token={token} />} />
-                <Route path="/users" element={<Users token={token} />} />
-                <Route path="/reels" element={<ReelsAdmin token={token} />} />
-                <Route path="*" element={<List token={token} />} />
-              </Routes>
-            </div>
           </div>
-        </>
+
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <Navbar setToken={setToken} />
+
+            <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">
+              <div className="max-w-[1600px] mx-auto">
+                <Routes>
+                  <Route path="/add" element={<Add token={token} />} />
+                  <Route path="/list" element={<List token={token} />} />
+                  <Route path="/orders" element={<Orders token={token} />} />
+                  <Route path="/users" element={<Users token={token} />} />
+                  <Route path="/reels" element={<ReelsAdmin token={token} />} />
+                  <Route path="*" element={<List token={token} />} />
+                </Routes>
+              </div>
+            </main>
+          </div>
+        </div>
       }
     </div>
   )
