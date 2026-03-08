@@ -4,7 +4,19 @@ import { backendUrl } from "../constants";
 import { toast } from "react-toastify";
 import { formatNumber } from "../utils/price";
 
-const SIZES = ["S", "M", "L", "XL", "XXL", "XXXL", "4XL", "5XL", "6XL", "7XL", "Free Size"];
+const SIZES = [
+  "S",
+  "M",
+  "L",
+  "XL",
+  "XXL",
+  "XXXL",
+  "4XL",
+  "5XL",
+  "6XL",
+  "7XL",
+  "Free Size",
+];
 
 // SAFE KEY (must match backend)
 const getKey = (value) => value.trim().toLowerCase().replace(/\s+/g, "_");
@@ -18,27 +30,21 @@ const Add = ({ token }) => {
   const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Auto-complete data
-  const [existingCategories, setExistingCategories] = useState([]);
-  const [existingSubCategories, setExistingSubCategories] = useState([]);
+  // Managed category data
+  const [categoriesData, setCategoriesData] = useState([]);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchCategories = async () => {
       try {
-        const res = await axios.get(`${backendUrl}/api/product/list`);
+        const res = await axios.get(`${backendUrl}/api/category/list`);
         if (res.data.success) {
-          const products = res.data.products || [];
-          // Extract unique categories and subcategories
-          const uniqueCategories = [...new Set(products.map((p) => p.category).filter(Boolean))];
-          const uniqueSubCategories = [...new Set(products.map((p) => p.subCategory).filter(Boolean))];
-          setExistingCategories(uniqueCategories);
-          setExistingSubCategories(uniqueSubCategories);
+          setCategoriesData(res.data.categories || []);
         }
       } catch (err) {
         console.error("Error fetching categories:", err);
       }
     };
-    fetchProducts();
+    fetchCategories();
   }, []);
 
   // ✅ Wholesale variants: price & stock at variant level
@@ -49,7 +55,16 @@ const Add = ({ token }) => {
   const addVariant = () => {
     setVariants((prev) => [
       ...prev,
-      { color: "", fabric: "", code: "", images: [], sizes: [], price: "", stock: "", allowedSizeCount: "" },
+      {
+        color: "",
+        fabric: "",
+        code: "",
+        images: [],
+        sizes: [],
+        price: "",
+        stock: "",
+        allowedSizeCount: "",
+      },
     ]);
   };
 
@@ -131,17 +146,26 @@ const Add = ({ token }) => {
       }
 
       if (!v.allowedSizeCount) {
-        toast.error(`Please specify the 'Number of Sizes' for ${v.color || "the variant"}`);
+        toast.error(
+          `Please specify the 'Number of Sizes' for ${v.color || "the variant"}`,
+        );
         return false;
       }
 
       if (v.allowedSizeCount === "All" && v.sizes.length !== SIZES.length) {
-        toast.error(`You selected 'All' sizes for ${v.color} but some are missing.`);
+        toast.error(
+          `You selected 'All' sizes for ${v.color} but some are missing.`,
+        );
         return false;
       }
 
-      if (v.allowedSizeCount !== "All" && v.sizes.length !== Number(v.allowedSizeCount)) {
-        toast.error(`You must select exactly ${v.allowedSizeCount} size(s) for ${v.color}`);
+      if (
+        v.allowedSizeCount !== "All" &&
+        v.sizes.length !== Number(v.allowedSizeCount)
+      ) {
+        toast.error(
+          `You must select exactly ${v.allowedSizeCount} size(s) for ${v.color}`,
+        );
         return false;
       }
 
@@ -188,8 +212,8 @@ const Add = ({ token }) => {
             sizes: v.sizes, // ["S","M"]
             price: Number(v.price),
             stock: Number(v.stock || 0),
-          }))
-        )
+          })),
+        ),
       );
 
       // ✅ Images (dynamic keys)
@@ -237,8 +261,12 @@ const Add = ({ token }) => {
       {/* Page Header Area */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Add New Product</h2>
-          <p className="text-sm text-slate-500 mt-1">Create a new entry in your product catalog</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Add New Product
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Create a new entry in your product catalog
+          </p>
         </div>
       </div>
 
@@ -246,11 +274,15 @@ const Add = ({ token }) => {
         {/* Basic Information Section */}
         <div className="admin-card">
           <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-200">
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Basic Information</h3>
+            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+              Basic Information
+            </h3>
           </div>
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">Product Name</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">
+                Product Name
+              </label>
               <input
                 type="text"
                 placeholder="e.g., Premium Cotton Kurta"
@@ -262,7 +294,9 @@ const Add = ({ token }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">Description</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">
+                Description
+              </label>
               <textarea
                 placeholder="Enter detailed product description..."
                 value={description}
@@ -274,36 +308,47 @@ const Add = ({ token }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">Category</label>
-                <input
-                  list="categories-list"
-                  placeholder="e.g., Men, Women"
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">
+                  Category
+                </label>
+                <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full"
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setSubCategory("");
+                  }}
+                  className="w-full h-11 px-4 bg-white border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500 transition-all font-bold text-slate-700"
                   required
-                />
-                <datalist id="categories-list">
-                  {existingCategories.map((c, i) => (
-                    <option key={i} value={c} />
+                >
+                  <option value="">Select Category</option>
+                  {categoriesData.map((c) => (
+                    <option key={c._id} value={c.name}>
+                      {c.name}
+                    </option>
                   ))}
-                </datalist>
+                </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">Sub Category</label>
-                <input
-                  list="subcategories-list"
-                  placeholder="e.g., Topwear, Bottomwear"
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">
+                  Sub Category
+                </label>
+                <select
                   value={subCategory}
                   onChange={(e) => setSubCategory(e.target.value)}
-                  className="w-full"
+                  className="w-full h-11 px-4 bg-white border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500 transition-all font-bold text-slate-700"
                   required
-                />
-                <datalist id="subcategories-list">
-                  {existingSubCategories.map((sc, i) => (
-                    <option key={i} value={sc} />
-                  ))}
-                </datalist>
+                  disabled={!category}
+                >
+                  <option value="">Select Subcategory</option>
+                  {category &&
+                    categoriesData
+                      .find((c) => c.name === category)
+                      ?.subCategories.map((sc, i) => (
+                        <option key={i} value={sc}>
+                          {sc}
+                        </option>
+                      ))}
+                </select>
               </div>
             </div>
           </div>
@@ -312,14 +357,26 @@ const Add = ({ token }) => {
         {/* Variants Section */}
         <div className="admin-card">
           <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Product Variants (Wholesale)</h3>
+            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+              Product Variants (Wholesale)
+            </h3>
             <button
               type="button"
               onClick={addVariant}
               className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center gap-2"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               Add Variant
             </button>
@@ -329,47 +386,74 @@ const Add = ({ token }) => {
             {variants.length === 0 ? (
               <div className="text-center py-10 text-slate-400">
                 <p className="text-sm font-medium">No variants added yet</p>
-                <p className="text-[11px] mt-1">At least one variant is required to create a product</p>
+                <p className="text-[11px] mt-1">
+                  At least one variant is required to create a product
+                </p>
               </div>
             ) : (
               <div className="space-y-6">
                 {variants.map((variant, vIndex) => (
-                  <div key={vIndex} className="p-5 rounded-xl border border-slate-200 bg-slate-50/30 relative">
+                  <div
+                    key={vIndex}
+                    className="p-5 rounded-xl border border-slate-200 bg-slate-50/30 relative"
+                  >
                     <button
                       type="button"
                       onClick={() => removeVariant(vIndex)}
                       className="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
                       </svg>
                     </button>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Color</label>
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                          Color
+                        </label>
                         <input
                           placeholder="e.g., Ruby Red"
                           value={variant.color}
-                          onChange={(e) => updateVariant(vIndex, "color", e.target.value)}
+                          onChange={(e) =>
+                            updateVariant(vIndex, "color", e.target.value)
+                          }
                           className="w-full bg-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Fabric</label>
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                          Fabric
+                        </label>
                         <input
                           placeholder="e.g., Pure Cotton"
                           value={variant.fabric}
-                          onChange={(e) => updateVariant(vIndex, "fabric", e.target.value)}
+                          onChange={(e) =>
+                            updateVariant(vIndex, "fabric", e.target.value)
+                          }
                           className="w-full bg-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Variant Code</label>
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                          Variant Code
+                        </label>
                         <input
                           placeholder="SKU-XXXX"
                           value={variant.code}
-                          onChange={(e) => updateVariant(vIndex, "code", e.target.value)}
+                          onChange={(e) =>
+                            updateVariant(vIndex, "code", e.target.value)
+                          }
                           className="w-full bg-white"
                         />
                       </div>
@@ -377,32 +461,44 @@ const Add = ({ token }) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Price (Wholesale per-piece)</label>
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                          Price (Wholesale per-piece)
+                        </label>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">₹</span>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">
+                            ₹
+                          </span>
                           <input
                             type="number"
                             placeholder="0.00"
                             value={variant.price}
-                            onChange={(e) => updateVariant(vIndex, "price", e.target.value)}
+                            onChange={(e) =>
+                              updateVariant(vIndex, "price", e.target.value)
+                            }
                             className="w-full pl-7 bg-white"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Initial Stock</label>
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                          Initial Stock
+                        </label>
                         <input
                           type="number"
                           placeholder="0"
                           value={variant.stock}
-                          onChange={(e) => updateVariant(vIndex, "stock", e.target.value)}
+                          onChange={(e) =>
+                            updateVariant(vIndex, "stock", e.target.value)
+                          }
                           className="w-full bg-white"
                         />
                       </div>
                     </div>
 
                     <div className="mb-4">
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Images</label>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                        Images
+                      </label>
                       <input
                         type="file"
                         multiple
@@ -419,9 +515,13 @@ const Add = ({ token }) => {
 
                     <div>
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase">Available Sizes</label>
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase">
+                          Available Sizes
+                        </label>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">Count:</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase">
+                            Count:
+                          </span>
                           <select
                             value={variant.allowedSizeCount || ""}
                             onChange={(e) => {
@@ -433,7 +533,10 @@ const Add = ({ token }) => {
                               } else if (val) {
                                 const currentSizes = updated[vIndex].sizes;
                                 if (currentSizes.length > Number(val)) {
-                                  updated[vIndex].sizes = currentSizes.slice(0, Number(val));
+                                  updated[vIndex].sizes = currentSizes.slice(
+                                    0,
+                                    Number(val),
+                                  );
                                 }
                               } else {
                                 updated[vIndex].sizes = [];
@@ -443,8 +546,10 @@ const Add = ({ token }) => {
                             className="text-[10px] py-1 h-auto bg-white"
                           >
                             <option value="">Select...</option>
-                            {[...Array(SIZES.length).keys()].map(i => (
-                              <option key={i + 1} value={i + 1}>{i + 1}</option>
+                            {[...Array(SIZES.length).keys()].map((i) => (
+                              <option key={i + 1} value={i + 1}>
+                                {i + 1}
+                              </option>
                             ))}
                             <option value="All">All ({SIZES.length})</option>
                           </select>
@@ -458,10 +563,11 @@ const Add = ({ token }) => {
                               key={size}
                               type="button"
                               onClick={() => toggleSize(vIndex, size)}
-                              className={`px-3 py-1 rounded text-[10px] font-bold transition-all border ${isSelected
-                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                                : "bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600"
-                                }`}
+                              className={`px-3 py-1 rounded text-[10px] font-bold transition-all border ${
+                                isSelected
+                                  ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                  : "bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600"
+                              }`}
                             >
                               {size}
                             </button>
@@ -480,14 +586,24 @@ const Add = ({ token }) => {
         <div className="admin-card">
           <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${bestseller ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${bestseller ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-400"}`}
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-700">Mark as Bestseller</p>
-                <p className="text-[11px] text-slate-500 mt-0.5">Feature this product in the premium bestseller section</p>
+                <p className="text-sm font-bold text-slate-700">
+                  Mark as Bestseller
+                </p>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Feature this product in the premium bestseller section
+                </p>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -505,7 +621,9 @@ const Add = ({ token }) => {
                 <span className="font-black text-xs">%</span>
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-700">Product Discount</p>
+                <p className="text-sm font-bold text-slate-700">
+                  Product Discount
+                </p>
                 <div className="flex items-center gap-2 mt-1">
                   <input
                     type="number"
@@ -516,7 +634,9 @@ const Add = ({ token }) => {
                     onChange={(e) => setDiscount(e.target.value)}
                     className="w-20 py-1 text-xs"
                   />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">% OFF</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">
+                    % OFF
+                  </span>
                 </div>
               </div>
             </div>
@@ -536,8 +656,18 @@ const Add = ({ token }) => {
             </>
           ) : (
             <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               PUBLISH PRODUCT
             </>

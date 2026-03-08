@@ -7,28 +7,30 @@ import List from "./pages/List";
 import Orders from "./pages/Order";
 import Users from "./pages/Users";
 import Login from "./components/Login";
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import ReelsAdmin from "./pages/ReelsAdmin";
 import GlobalDiscount from "./pages/GlobalDiscount";
 import ScrollToTop from "./components/ScrollToTop";
+import Category from "./pages/Category";
 
 const App = () => {
-
-  const [token, setToken] = useState(localStorage.getItem('token') ? localStorage.getItem('token') : "");
+  const [token, setToken] = useState(
+    localStorage.getItem("token") ? localStorage.getItem("token") : "",
+  );
 
   useEffect(() => {
-    localStorage.setItem('token', token);
-  }, [token])
-
+    localStorage.setItem("token", token);
+  }, [token]);
 
   return (
     <div className="bg-slate-50 min-h-screen">
       <ScrollToTop />
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-      {token === ""
-        ? <Login setToken={setToken} />
-        : <div className="flex h-screen overflow-hidden">
+      {token === "" ? (
+        <Login setToken={setToken} />
+      ) : (
+        <div className="flex h-screen overflow-hidden">
           {/* Standard Fixed Sidebar */}
           <div className="flex-shrink-0">
             <Sidebar />
@@ -46,16 +48,23 @@ const App = () => {
                   <Route path="/orders" element={<Orders token={token} />} />
                   <Route path="/users" element={<Users token={token} />} />
                   <Route path="/reels" element={<ReelsAdmin token={token} />} />
-                  <Route path="/discount" element={<GlobalDiscount token={token} />} />
+                  <Route
+                    path="/discount"
+                    element={<GlobalDiscount token={token} />}
+                  />
+                  <Route
+                    path="/category"
+                    element={<Category token={token} />}
+                  />
                   <Route path="*" element={<List token={token} />} />
                 </Routes>
               </div>
             </main>
           </div>
         </div>
-      }
+      )}
     </div>
-  )
-}
+  );
+};
 
 export default App;
