@@ -259,8 +259,8 @@ const List = ({ token }) => {
       fd.append("id", editProduct._id);
       fd.append("name", editProduct.name);
       fd.append("description", editProduct.description);
-      fd.append("category", editProduct.category);
-      fd.append("subCategory", editProduct.subCategory);
+      fd.append("category", JSON.stringify(Array.isArray(editProduct.category) ? editProduct.category : [editProduct.category]));
+      fd.append("subCategory", JSON.stringify(Array.isArray(editProduct.subCategory) ? editProduct.subCategory : [editProduct.subCategory]));
       fd.append("bestseller", editProduct.bestseller);
       fd.append("discount", editProduct.discount || 0);
 
@@ -447,7 +447,7 @@ const List = ({ token }) => {
                         {p.name}
                       </h3>
                       <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-black uppercase tracking-tighter border border-blue-100">
-                        {p.category}
+                        {Array.isArray(p.category) ? p.category.join(', ') : p.category}
                       </span>
                     </div>
 
@@ -539,6 +539,16 @@ const List = ({ token }) => {
                       onClick={(e) => {
                         e.stopPropagation();
                         const cloned = deepClone(p);
+                        
+                        // ✅ Normalize category and subCategory to arrays for multi-select UI
+                        const normalize = (val) => {
+                          if (!val) return [];
+                          if (Array.isArray(val)) return val.filter(Boolean);
+                          return [val].filter(Boolean);
+                        };
+                        cloned.category = normalize(cloned.category);
+                        cloned.subCategory = normalize(cloned.subCategory);
+
                         // Initialise allowedSizeCount from existing sizes
                         cloned.variants = cloned.variants.map((v) => ({
                           ...v,
@@ -602,10 +612,10 @@ const List = ({ token }) => {
                 </h2>
                 <div className="flex items-center gap-3 mt-2">
                   <span className="bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-700">
-                    {viewProduct.category}
+                    {Array.isArray(viewProduct.category) ? viewProduct.category.join(', ') : viewProduct.category}
                   </span>
                   <span className="bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-700">
-                    {viewProduct.subCategory}
+                    {Array.isArray(viewProduct.subCategory) ? viewProduct.subCategory.join(', ') : viewProduct.subCategory}
                   </span>
                   {viewProduct.bestseller && (
                     <span className="bg-amber-500/20 text-amber-500 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-amber-500/30">
@@ -1055,68 +1065,91 @@ const List = ({ token }) => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">
-                        Global Category
+                        Global Categories (Select one or more)
                       </label>
-                      <select
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all text-sm font-medium"
-                        value={editProduct.category}
-                        onChange={(e) => {
-                          updateBasic("category", e.target.value);
-                          updateBasic("subCategory", "");
-                        }}
-                      >
-                        <option value="">Select Category</option>
-                        {/* Always include current value as fallback in case categoriesData hasn't loaded yet */}
-                        {editProduct.category &&
-                          !categoriesData.some(
-                            (c) => c.name === editProduct.category,
-                          ) && (
-                            <option value={editProduct.category}>
-                              {editProduct.category}
-                            </option>
-                          )}
-                        {categoriesData.map((c) => (
-                          <option key={c._id} value={c.name}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="grid grid-cols-2 gap-2 max-h-[150px] overflow-y-auto p-3 border border-slate-200 rounded-xl bg-slate-50/50">
+                        {categoriesData.map((c) => {
+                          const catArr = editProduct.category || [];
+                          const isSelected = catArr.includes(c.name);
+                          return (
+                            <label 
+                              key={c._id} 
+                              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all border ${isSelected ? 'bg-blue-50 border-blue-200 text-blue-700' : 'hover:bg-white border-transparent text-slate-600'}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  let newCats;
+                                  if (e.target.checked) {
+                                    newCats = [...catArr, c.name];
+                                  } else {
+                                    newCats = catArr.filter(cat => cat !== c.name);
+                                    // Also cleanup subCategories
+                                    const otherCatsSubCategories = categoriesData
+                                      .filter(cat => newCats.includes(cat.name))
+                                      .flatMap(cat => cat.subCategories);
+                                    const subArr = editProduct.subCategory || [];
+                                    updateBasic("subCategory", subArr.filter(sc => otherCatsSubCategories.includes(sc)));
+                                  }
+                                  updateBasic("category", newCats);
+                                }}
+                                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="text-[10px] font-bold uppercase">{c.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">
-                        Sub-Classification
+                        Sub-Classifications (Select one or more)
                       </label>
-                      <select
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-blue-500 transition-all text-sm font-medium"
-                        value={editProduct.subCategory}
-                        onChange={(e) =>
-                          updateBasic("subCategory", e.target.value)
-                        }
-                        disabled={!editProduct.category}
-                      >
-                        <option value="">Select Subcategory</option>
-                        {/* Always include current subcategory as fallback */}
-                        {editProduct.subCategory &&
-                          !categoriesData
-                            .find((c) => c.name === editProduct.category)
-                            ?.subCategories.includes(
-                              editProduct.subCategory,
-                            ) && (
-                            <option value={editProduct.subCategory}>
-                              {editProduct.subCategory}
-                            </option>
-                          )}
-                        {editProduct.category &&
-                          categoriesData
-                            .find((c) => c.name === editProduct.category)
-                            ?.subCategories.map((sc, i) => (
-                              <option key={i} value={sc}>
-                                {sc}
-                              </option>
-                            ))}
-                      </select>
+                      <div className="grid grid-cols-2 gap-2 max-h-[150px] overflow-y-auto p-3 border border-slate-200 rounded-xl bg-slate-50/50">
+                        {(() => {
+                          const catArr = editProduct.category || [];
+                          const subArr = editProduct.subCategory || [];
+                          
+                          if (catArr.length === 0) {
+                            return (
+                              <div className="col-span-2 text-center py-4 text-slate-400 text-[9px] font-bold uppercase">
+                                Select a category first
+                              </div>
+                            );
+                          }
+
+                          return categoriesData
+                            .filter(c => catArr.includes(c.name))
+                            .flatMap(c => c.subCategories)
+                            .filter((value, index, self) => self.indexOf(value) === index) // Unique
+                            .map((sc, i) => {
+                              const isSelected = subArr.includes(sc);
+                              return (
+                                <label 
+                                  key={i} 
+                                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all border ${isSelected ? 'bg-blue-50 border-blue-200 text-blue-700' : 'hover:bg-white border-transparent text-slate-600'}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        updateBasic("subCategory", [...subArr, sc]);
+                                      } else {
+                                        updateBasic("subCategory", subArr.filter(s => s !== sc));
+                                      }
+                                    }}
+                                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="text-[10px] font-bold uppercase">{sc}</span>
+                                </label>
+                              );
+                            });
+                        })()}
+                      </div>
                     </div>
                   </div>
 

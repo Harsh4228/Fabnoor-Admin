@@ -24,8 +24,8 @@ const getKey = (value) => value.trim().toLowerCase().replace(/\s+/g, "_");
 const Add = ({ token }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [subCategory, setSubCategory] = useState("");
+  const [category, setCategory] = useState([]); // Array of strings
+  const [subCategory, setSubCategory] = useState([]); // Array of strings
   const [bestseller, setBestseller] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -119,8 +119,8 @@ const Add = ({ token }) => {
   /* ================= VALIDATION ================= */
 
   const validateForm = () => {
-    if (!name || !description || !category || !subCategory) {
-      toast.error("All basic fields are required");
+    if (!name || !description || category.length === 0 || subCategory.length === 0) {
+      toast.error("All basic fields are required (including at least one category and subcategory)");
       return false;
     }
 
@@ -196,8 +196,8 @@ const Add = ({ token }) => {
 
       formData.append("name", name);
       formData.append("description", description);
-      formData.append("category", category);
-      formData.append("subCategory", subCategory);
+      formData.append("category", JSON.stringify(category));
+      formData.append("subCategory", JSON.stringify(subCategory));
       formData.append("bestseller", bestseller);
       formData.append("discount", discount);
 
@@ -238,8 +238,10 @@ const Add = ({ token }) => {
         // RESET FORM
         setName("");
         setDescription("");
-        setCategory("");
-        setSubCategory("");
+        setName("");
+        setDescription("");
+        setCategory([]);
+        setSubCategory([]);
         setBestseller(false);
         setDiscount(0);
         setVariants([]);
@@ -306,49 +308,77 @@ const Add = ({ token }) => {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">
-                  Category
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-2">
+                  Categories (Select one or more)
                 </label>
-                <select
-                  value={category}
-                  onChange={(e) => {
-                    setCategory(e.target.value);
-                    setSubCategory("");
-                  }}
-                  className="w-full h-11 px-4 bg-white border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500 transition-all font-bold text-slate-700"
-                  required
-                >
-                  <option value="">Select Category</option>
+                <div className="grid grid-cols-2 gap-2 max-h-[150px] overflow-y-auto p-3 border-2 border-slate-100 rounded-xl bg-slate-50/50">
                   {categoriesData.map((c) => (
-                    <option key={c._id} value={c.name}>
-                      {c.name}
-                    </option>
+                    <label 
+                      key={c._id} 
+                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all border ${category.includes(c.name) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'hover:bg-white border-transparent text-slate-600'}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={category.includes(c.name)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setCategory(prev => [...prev, c.name]);
+                          } else {
+                            setCategory(prev => prev.filter(cat => cat !== c.name));
+                            // Also remove subcategories that belong ONLY to this category
+                            const otherSelectedCats = category.filter(cat => cat !== c.name);
+                            const otherCatsSubCategories = categoriesData
+                              .filter(cat => otherSelectedCats.includes(cat.name))
+                              .flatMap(cat => cat.subCategories);
+                            
+                            setSubCategory(prev => prev.filter(sc => otherCatsSubCategories.includes(sc)));
+                          }
+                        }}
+                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-xs font-bold uppercase">{c.name}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-1.5">
-                  Sub Category
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-tight mb-2">
+                  Sub Categories (Select one or more)
                 </label>
-                <select
-                  value={subCategory}
-                  onChange={(e) => setSubCategory(e.target.value)}
-                  className="w-full h-11 px-4 bg-white border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500 transition-all font-bold text-slate-700"
-                  required
-                  disabled={!category}
-                >
-                  <option value="">Select Subcategory</option>
-                  {category &&
+                <div className="grid grid-cols-2 gap-2 max-h-[150px] overflow-y-auto p-3 border-2 border-slate-100 rounded-xl bg-slate-50/50">
+                  {category.length === 0 ? (
+                    <div className="col-span-2 text-center py-4 text-slate-400 text-[10px] font-bold uppercase">
+                      Select a category first
+                    </div>
+                  ) : (
                     categoriesData
-                      .find((c) => c.name === category)
-                      ?.subCategories.map((sc, i) => (
-                        <option key={i} value={sc}>
-                          {sc}
-                        </option>
-                      ))}
-                </select>
+                      .filter(c => category.includes(c.name))
+                      .flatMap(c => c.subCategories)
+                      .filter((value, index, self) => self.indexOf(value) === index) // Unique
+                      .map((sc, i) => (
+                        <label 
+                          key={i} 
+                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all border ${subCategory.includes(sc) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'hover:bg-white border-transparent text-slate-600'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={subCategory.includes(sc)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSubCategory(prev => [...prev, sc]);
+                              } else {
+                                setSubCategory(prev => prev.filter(sub => sub !== sc));
+                              }
+                            }}
+                            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-xs font-bold uppercase">{sc}</span>
+                        </label>
+                      ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
