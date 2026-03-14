@@ -471,16 +471,24 @@ const Users = ({ token }) => {
                             Joined
                           </p>
                           <p className="text-xs text-slate-400 mt-0.5">
-                            {new Date(
-                              u.createdAt ||
-                                (u._id.getTimestamp
-                                  ? u._id.getTimestamp()
-                                  : Date.now()),
-                            ).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
+                            {(() => {
+                              const date =
+                                u.createdAt ||
+                                (u._id && u._id.length === 24
+                                  ? new Date(
+                                      parseInt(u._id.substring(0, 8), 16) *
+                                        1000,
+                                    )
+                                  : Date.now());
+                              return new Date(date).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              );
+                            })()}
                           </p>
                         </td>
                         <td

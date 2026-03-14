@@ -18,8 +18,156 @@ const SIZES = [
   "Free Size",
 ];
 
-const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+// Helper to get a safe key for image uploads
 const getKey = (v) => v.trim().toLowerCase().replace(/\s+/g, "_");
+
+/* ================= QUICK EDIT COMPONENT ================= */
+const VariantQuickEdit = ({
+  productId,
+  variant,
+  currency,
+  onSave,
+  isLoading,
+}) => {
+  const [price, setPrice] = useState(variant.price);
+  const [stock, setStock] = useState(variant.stock);
+
+  // Sync if global state changes (after save)
+  useEffect(() => {
+    setPrice(variant.price);
+    setStock(variant.stock);
+  }, [variant.price, variant.stock]);
+
+  const hasChanges =
+    Number(price) !== Number(variant.price) ||
+    Number(stock) !== Number(variant.stock);
+
+  const isLow = Number(stock) > 0 && Number(stock) < 6;
+  const isOut = Number(stock) === 0;
+
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className={`flex flex-col gap-2 p-2.5 rounded-xl border transition-all ${
+        isOut
+          ? "bg-red-50/50 border-red-100"
+          : isLow
+            ? "bg-amber-50/50 border-amber-100"
+            : "bg-slate-50/50 border-slate-200"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <span
+            className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${isOut ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-slate-400"}`}
+          ></span>
+          <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight truncate">
+            {variant.color}
+          </span>
+          <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 ml-auto">
+            {currency}{formatNumber(variant.price)}
+          </span>
+        </div>
+        <span className="text-[8px] font-bold text-slate-400 font-mono hidden sm:inline">
+          {variant.code}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {/* Price Input */}
+        <div className="flex flex-col gap-0.5 flex-1">
+          <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest pl-1">
+            Price
+          </span>
+          <div className="relative group">
+            <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[8px] font-bold text-slate-400 group-focus-within:text-blue-500">
+              {currency}
+            </span>
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="w-full pl-4 pr-1.5 py-1 bg-white border border-slate-200 rounded-md text-[10px] font-bold outline-none focus:border-blue-500 transition-all text-right"
+            />
+          </div>
+        </div>
+
+        {/* Stock Input */}
+        <div className="flex flex-col gap-0.5 flex-1">
+          <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest text-center">
+            Stock
+          </span>
+          <div className="relative">
+            <input
+              type="number"
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              className={`w-full px-1.5 py-1 bg-white border border-slate-200 rounded-md text-[10px] font-black outline-none focus:border-blue-500 transition-all text-center ${isOut ? "text-red-600" : isLow ? "text-amber-600" : "text-slate-600"}`}
+            />
+          </div>
+        </div>
+
+        {/* Save/Cancel Buttons */}
+        {hasChanges && (
+          <div className="flex gap-1">
+            <button
+              onClick={() =>
+                onSave(productId, variant.code, {
+                  price: Number(price),
+                  stock: Number(stock),
+                })
+              }
+              disabled={isLoading}
+              className="w-7 h-7 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-all active:scale-95 disabled:opacity-50"
+              title="Save Changes"
+            >
+              {isLoading ? (
+                <div className="w-3 h-3 border border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </button>
+            <button
+              onClick={() => {
+                setPrice(variant.price);
+                setStock(variant.stock);
+              }}
+              disabled={isLoading}
+              className="w-7 h-7 flex items-center justify-center bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 rounded-md shadow-sm transition-all active:scale-95"
+              title="Discard Changes"
+            >
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={3}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const List = ({ token }) => {
   const [products, setProducts] = useState([]);
@@ -72,6 +220,42 @@ const List = ({ token }) => {
       toast.error(err.message);
     } finally {
       setDeleteLoadingId(null);
+    }
+  };
+
+  /* ================= QUICK UPDATE ================= */
+  const [quickUpdateLoading, setQuickUpdateLoading] = useState(null); // variantCode
+
+  const handleQuickUpdate = async (productId, variantCode, updates) => {
+    setQuickUpdateLoading(variantCode);
+    try {
+      const res = await axios.post(
+        `${backendUrl}/api/product/update-quick`,
+        { id: productId, variantUpdates: [{ code: variantCode, ...updates }] },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      if (res.data.success) {
+        toast.success("Variant updated");
+        // Update local state without fetching all products
+        setProducts((prev) =>
+          prev.map((p) => {
+            if (p._id === productId) {
+              return {
+                ...p,
+                variants: p.variants.map((v) =>
+                  v.code === variantCode ? { ...v, ...updates } : v,
+                ),
+              };
+            }
+            return p;
+          }),
+        );
+      }
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setQuickUpdateLoading(null);
     }
   };
 
@@ -137,33 +321,33 @@ const List = ({ token }) => {
           sizes: [],
           price: "",
           stock: "",
+          allowedSizeCount: "", // Added to match Add.jsx
         },
       ],
     }));
   };
 
   const removeVariant = (vIndex) => {
-    setEditProduct((p) => {
-      const updated = deepClone(p);
-      updated.variants.splice(vIndex, 1);
-      return updated;
-    });
+    setEditProduct((p) => ({
+      ...p,
+      variants: p.variants.filter((_, i) => i !== vIndex),
+    }));
   };
 
   const updateVariantField = (vIndex, field, value) => {
     setEditProduct((p) => {
-      const updated = deepClone(p);
-      updated.variants[vIndex][field] = value;
-      return updated;
+      const newVariants = [...p.variants];
+      newVariants[vIndex] = { ...newVariants[vIndex], [field]: value };
+      return { ...p, variants: newVariants };
     });
   };
 
-  /* ================= TOGGLE SIZE (with count enforcement like Add.jsx) ================= */
+  /* ================= TOGGLE SIZE (with count enforcement) ================= */
   const toggleSize = (vIndex, size) => {
     setEditProduct((p) => {
-      const updated = deepClone(p);
-      const variant = updated.variants[vIndex];
-      const currentSizes = variant.sizes || [];
+      const newVariants = [...p.variants];
+      const variant = { ...newVariants[vIndex] };
+      const currentSizes = [...(variant.sizes || [])];
 
       if (currentSizes.includes(size)) {
         variant.sizes = currentSizes.filter((s) => s !== size);
@@ -186,34 +370,44 @@ const List = ({ token }) => {
         }
       }
 
-      return updated;
+      newVariants[vIndex] = variant;
+      return { ...p, variants: newVariants };
     });
   };
 
   /* ================= IMAGES ================= */
   const handleImages = (vIndex, files) => {
     setEditProduct((p) => {
-      const updated = deepClone(p);
+      const newVariants = [...p.variants];
+      const variant = { ...newVariants[vIndex] };
       const newFiles = Array.from(files);
-      const currentNewImages = updated.variants[vIndex].newImages || [];
-      updated.variants[vIndex].newImages = [...currentNewImages, ...newFiles];
-      return updated;
+      variant.newImages = [...(variant.newImages || []), ...newFiles];
+      newVariants[vIndex] = variant;
+      return { ...p, variants: newVariants };
     });
   };
 
   const removeExistingImage = (vIndex, imgIndex) => {
     setEditProduct((p) => {
-      const updated = deepClone(p);
-      updated.variants[vIndex].images.splice(imgIndex, 1);
-      return updated;
+      const newVariants = [...p.variants];
+      const variant = { ...newVariants[vIndex] };
+      const newImages = [...variant.images];
+      newImages.splice(imgIndex, 1);
+      variant.images = newImages;
+      newVariants[vIndex] = variant;
+      return { ...p, variants: newVariants };
     });
   };
 
   const removeNewImage = (vIndex, imgIndex) => {
     setEditProduct((p) => {
-      const updated = deepClone(p);
-      updated.variants[vIndex].newImages.splice(imgIndex, 1);
-      return updated;
+      const newVariants = [...p.variants];
+      const variant = { ...newVariants[vIndex] };
+      const newNewImages = [...variant.newImages];
+      newNewImages.splice(imgIndex, 1);
+      variant.newImages = newNewImages;
+      newVariants[vIndex] = variant;
+      return { ...p, variants: newVariants };
     });
   };
 
@@ -259,8 +453,22 @@ const List = ({ token }) => {
       fd.append("id", editProduct._id);
       fd.append("name", editProduct.name);
       fd.append("description", editProduct.description);
-      fd.append("category", JSON.stringify(Array.isArray(editProduct.category) ? editProduct.category : [editProduct.category]));
-      fd.append("subCategory", JSON.stringify(Array.isArray(editProduct.subCategory) ? editProduct.subCategory : [editProduct.subCategory]));
+      fd.append(
+        "category",
+        JSON.stringify(
+          Array.isArray(editProduct.category)
+            ? editProduct.category
+            : [editProduct.category],
+        ),
+      );
+      fd.append(
+        "subCategory",
+        JSON.stringify(
+          Array.isArray(editProduct.subCategory)
+            ? editProduct.subCategory
+            : [editProduct.subCategory],
+        ),
+      );
       fd.append("bestseller", editProduct.bestseller);
       fd.append("discount", editProduct.discount || 0);
 
@@ -410,10 +618,9 @@ const List = ({ token }) => {
         return (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             {/* Desktop Header */}
-            <div className="hidden md:grid md:grid-cols-[80px_1fr_120px_200px] gap-3 p-4 bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest shadow-inner">
+            <div className="hidden md:grid md:grid-cols-[80px_1fr_200px] gap-3 p-4 bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest shadow-inner">
               <div className="px-1">Identity</div>
-              <div>Catalog Specifications</div>
-              <div className="text-right">Valuation</div>
+              <div>Catalog Specifications & Pricing</div>
               <div className="text-center">Control Logic</div>
             </div>
 
@@ -421,7 +628,7 @@ const List = ({ token }) => {
               {filteredProducts.map((p) => (
                 <div
                   key={p._id}
-                  className="grid grid-cols-1 md:grid-cols-[80px_1fr_120px_200px] gap-3 p-4 items-center hover:bg-slate-50/50 transition-all cursor-pointer group"
+                  className="grid grid-cols-1 md:grid-cols-[80px_1fr_200px] gap-3 p-4 items-center hover:bg-slate-50/50 transition-all cursor-pointer group"
                   onClick={() => setViewProduct(p)}
                 >
                   {/* Image */}
@@ -447,58 +654,31 @@ const List = ({ token }) => {
                         {p.name}
                       </h3>
                       <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-black uppercase tracking-tighter border border-blue-100">
-                        {Array.isArray(p.category) ? p.category.join(', ') : p.category}
+                        {Array.isArray(p.category)
+                          ? p.category.join(", ")
+                          : p.category}
                       </span>
                     </div>
 
                     {/* Per-variant stock tracking */}
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {(p.variants || []).map((v, i) => {
-                        const stock = Number(v.stock || 0);
-                        const label = v.color;
-                        const isLow = stock > 0 && stock < 6;
-                        const isOut = stock === 0;
-
-                        return (
-                          <div
-                            key={v.code || i}
-                            title={`${v.fabric || v.type || ""} (${v.code || ""})`}
-                            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-tight border transition-all ${
-                              isOut
-                                ? "bg-red-50 text-red-700 border-red-100"
-                                : isLow
-                                  ? "bg-amber-50 text-amber-700 border-amber-100"
-                                  : "bg-slate-50 text-slate-500 border-slate-200"
-                            }`}
-                          >
-                            <span
-                              className={`w-1 h-1 rounded-full ${isOut ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-slate-400"}`}
-                            ></span>
-                            {label}: {isOut ? "EMPTY" : stock}
-                          </div>
-                        );
-                      })}
+                    <div className="flex flex-wrap gap-2 mt-2.5">
+                      {(p.variants || []).map((v, i) => (
+                        <VariantQuickEdit
+                          key={v.code || i}
+                          productId={p._id}
+                          variant={v}
+                          currency={currency}
+                          onSave={handleQuickUpdate}
+                          isLoading={quickUpdateLoading === v.code}
+                        />
+                      ))}
                     </div>
-                  </div>
 
-                  {/* Price */}
-                  <div className="text-right md:pr-4">
-                    <p className="text-xl font-black text-slate-900 tracking-tighter">
-                      {currency}
-                      {formatNumber(
-                        Math.min(
-                          ...(p.variants || []).map((v) => v.price || 0),
-                        ),
-                      )}
-                    </p>
                     {p.discount > 0 && (
-                      <p className="text-[10px] font-black text-red-500 uppercase tracking-tighter mt-0.5">
-                        -{p.discount}% OFF
-                      </p>
+                      <div className="mt-2 text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 flex items-center justify-center w-fit px-2 py-0.5 rounded-full uppercase">
+                        Active Discount: {p.discount}% OFF
+                      </div>
                     )}
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                      Floor Price
-                    </p>
                   </div>
 
                   {/* Actions */}
@@ -538,26 +718,27 @@ const List = ({ token }) => {
                       className="flex-1 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const cloned = deepClone(p);
-                        
-                        // ✅ Normalize category and subCategory to arrays for multi-select UI
+
+                        // ✅ Normalize and initialize for editing without deepClone
                         const normalize = (val) => {
                           if (!val) return [];
                           if (Array.isArray(val)) return val.filter(Boolean);
                           return [val].filter(Boolean);
                         };
-                        cloned.category = normalize(cloned.category);
-                        cloned.subCategory = normalize(cloned.subCategory);
 
-                        // Initialise allowedSizeCount from existing sizes
-                        cloned.variants = cloned.variants.map((v) => ({
-                          ...v,
-                          allowedSizeCount:
-                            v.sizes?.length === SIZES.length
-                              ? "All"
-                              : v.sizes?.length?.toString() || "",
-                        }));
-                        setEditProduct(cloned);
+                        const initialEdit = {
+                          ...p,
+                          category: normalize(p.category),
+                          subCategory: normalize(p.subCategory),
+                          variants: (p.variants || []).map((v) => ({
+                            ...v,
+                            allowedSizeCount:
+                              v.sizes?.length === SIZES.length
+                                ? "All"
+                                : v.sizes?.length?.toString() || "",
+                          })),
+                        };
+                        setEditProduct(initialEdit);
                       }}
                     >
                       Modify
@@ -612,10 +793,14 @@ const List = ({ token }) => {
                 </h2>
                 <div className="flex items-center gap-3 mt-2">
                   <span className="bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-700">
-                    {Array.isArray(viewProduct.category) ? viewProduct.category.join(', ') : viewProduct.category}
+                    {Array.isArray(viewProduct.category)
+                      ? viewProduct.category.join(", ")
+                      : viewProduct.category}
                   </span>
                   <span className="bg-slate-800 text-slate-300 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-700">
-                    {Array.isArray(viewProduct.subCategory) ? viewProduct.subCategory.join(', ') : viewProduct.subCategory}
+                    {Array.isArray(viewProduct.subCategory)
+                      ? viewProduct.subCategory.join(", ")
+                      : viewProduct.subCategory}
                   </span>
                   {viewProduct.bestseller && (
                     <span className="bg-amber-500/20 text-amber-500 px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-amber-500/30">
@@ -1074,9 +1259,9 @@ const List = ({ token }) => {
                           const catArr = editProduct.category || [];
                           const isSelected = catArr.includes(c.name);
                           return (
-                            <label 
-                              key={c._id} 
-                              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all border ${isSelected ? 'bg-blue-50 border-blue-200 text-blue-700' : 'hover:bg-white border-transparent text-slate-600'}`}
+                            <label
+                              key={c._id}
+                              className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all border ${isSelected ? "bg-blue-50 border-blue-200 text-blue-700" : "hover:bg-white border-transparent text-slate-600"}`}
                             >
                               <input
                                 type="checkbox"
@@ -1086,19 +1271,32 @@ const List = ({ token }) => {
                                   if (e.target.checked) {
                                     newCats = [...catArr, c.name];
                                   } else {
-                                    newCats = catArr.filter(cat => cat !== c.name);
+                                    newCats = catArr.filter(
+                                      (cat) => cat !== c.name,
+                                    );
                                     // Also cleanup subCategories
-                                    const otherCatsSubCategories = categoriesData
-                                      .filter(cat => newCats.includes(cat.name))
-                                      .flatMap(cat => cat.subCategories);
-                                    const subArr = editProduct.subCategory || [];
-                                    updateBasic("subCategory", subArr.filter(sc => otherCatsSubCategories.includes(sc)));
+                                    const otherCatsSubCategories =
+                                      categoriesData
+                                        .filter((cat) =>
+                                          newCats.includes(cat.name),
+                                        )
+                                        .flatMap((cat) => cat.subCategories);
+                                    const subArr =
+                                      editProduct.subCategory || [];
+                                    updateBasic(
+                                      "subCategory",
+                                      subArr.filter((sc) =>
+                                        otherCatsSubCategories.includes(sc),
+                                      ),
+                                    );
                                   }
                                   updateBasic("category", newCats);
                                 }}
                                 className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                               />
-                              <span className="text-[10px] font-bold uppercase">{c.name}</span>
+                              <span className="text-[10px] font-bold uppercase">
+                                {c.name}
+                              </span>
                             </label>
                           );
                         })}
@@ -1112,7 +1310,7 @@ const List = ({ token }) => {
                         {(() => {
                           const catArr = editProduct.category || [];
                           const subArr = editProduct.subCategory || [];
-                          
+
                           if (catArr.length === 0) {
                             return (
                               <div className="col-span-2 text-center py-4 text-slate-400 text-[9px] font-bold uppercase">
@@ -1122,29 +1320,40 @@ const List = ({ token }) => {
                           }
 
                           return categoriesData
-                            .filter(c => catArr.includes(c.name))
-                            .flatMap(c => c.subCategories)
-                            .filter((value, index, self) => self.indexOf(value) === index) // Unique
+                            .filter((c) => catArr.includes(c.name))
+                            .flatMap((c) => c.subCategories)
+                            .filter(
+                              (value, index, self) =>
+                                self.indexOf(value) === index,
+                            ) // Unique
                             .map((sc, i) => {
                               const isSelected = subArr.includes(sc);
                               return (
-                                <label 
-                                  key={i} 
-                                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all border ${isSelected ? 'bg-blue-50 border-blue-200 text-blue-700' : 'hover:bg-white border-transparent text-slate-600'}`}
+                                <label
+                                  key={i}
+                                  className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all border ${isSelected ? "bg-blue-50 border-blue-200 text-blue-700" : "hover:bg-white border-transparent text-slate-600"}`}
                                 >
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
                                     onChange={(e) => {
                                       if (e.target.checked) {
-                                        updateBasic("subCategory", [...subArr, sc]);
+                                        updateBasic("subCategory", [
+                                          ...subArr,
+                                          sc,
+                                        ]);
                                       } else {
-                                        updateBasic("subCategory", subArr.filter(s => s !== sc));
+                                        updateBasic(
+                                          "subCategory",
+                                          subArr.filter((s) => s !== sc),
+                                        );
                                       }
                                     }}
                                     className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
                                   />
-                                  <span className="text-[10px] font-bold uppercase">{sc}</span>
+                                  <span className="text-[10px] font-bold uppercase">
+                                    {sc}
+                                  </span>
                                 </label>
                               );
                             });
@@ -1483,24 +1692,28 @@ const List = ({ token }) => {
                                 onChange={(e) => {
                                   const val = e.target.value;
                                   setEditProduct((p) => {
-                                    const updated = deepClone(p);
-                                    updated.variants[vIndex].allowedSizeCount =
-                                      val;
+                                    const newVariants = [...p.variants];
+                                    const variant = { ...newVariants[vIndex] };
+
+                                    variant.allowedSizeCount = val;
                                     if (val === "All") {
-                                      updated.variants[vIndex].sizes = [
-                                        ...SIZES,
-                                      ];
+                                      variant.sizes = [...SIZES];
                                     } else if (val) {
-                                      const current =
-                                        updated.variants[vIndex].sizes;
+                                      const current = [
+                                        ...(variant.sizes || []),
+                                      ];
                                       if (current.length > Number(val)) {
-                                        updated.variants[vIndex].sizes =
-                                          current.slice(0, Number(val));
+                                        variant.sizes = current.slice(
+                                          0,
+                                          Number(val),
+                                        );
                                       }
                                     } else {
-                                      updated.variants[vIndex].sizes = [];
+                                      variant.sizes = [];
                                     }
-                                    return updated;
+
+                                    newVariants[vIndex] = variant;
+                                    return { ...p, variants: newVariants };
                                   });
                                 }}
                                 className="text-[10px] py-1 h-auto bg-white border border-slate-200 rounded px-2 outline-none focus:border-indigo-400"
