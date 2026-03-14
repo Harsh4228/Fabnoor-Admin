@@ -17,6 +17,11 @@ const Category = ({ token }) => {
   // Form states
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategorySequence, setNewCategorySequence] = useState(0);
+
+  const [isEditing, setIsEditing] = useState(null); // id of category being edited
+  const [editName, setEditName] = useState("");
+  const [editSequence, setEditSequence] = useState(0);
 
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [newSubCategoryName, setNewSubCategoryName] = useState("");
@@ -46,17 +51,38 @@ const Category = ({ token }) => {
     try {
       const res = await axios.post(
         `${backendUrl}/api/category/add`,
-        { name: newCategoryName },
+        { name: newCategoryName, sequence: newCategorySequence },
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (res.data.success) {
         toast.success("Category added");
         setNewCategoryName("");
+        setNewCategorySequence(0);
         setShowAddCategory(false);
         fetchCategories();
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to add category");
+    }
+  };
+
+  const handleUpdateCategory = async (e) => {
+    e.preventDefault();
+    if (!editName.trim()) return;
+
+    try {
+      const res = await axios.post(
+        `${backendUrl}/api/category/update`,
+        { id: isEditing, name: editName, sequence: editSequence },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (res.data.success) {
+        toast.success("Category updated");
+        setIsEditing(null);
+        fetchCategories();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to update category");
     }
   };
 
@@ -151,21 +177,31 @@ const Category = ({ token }) => {
       {/* Add Category Form */}
       {showAddCategory && (
         <div className="admin-card p-6 mb-8 border-2 border-slate-900 bg-white animate-premium-slide">
-          <form onSubmit={handleAddCategory} className="flex gap-4">
+          <form onSubmit={handleAddCategory} className="flex flex-col md:flex-row gap-4">
             <input
               type="text"
-              placeholder="Enter category name (e.g. Clothing)"
+              placeholder="Category name (e.g. Clothing)"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
               className="flex-1 px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-slate-900 transition-all font-bold"
               autoFocus
             />
-            <button
-              type="submit"
-              className="bg-slate-900 text-white px-8 rounded-xl font-black text-xs uppercase tracking-widest"
-            >
-              Save Category
-            </button>
+            <div className="flex gap-4">
+              <input
+                type="number"
+                placeholder="Seq"
+                title="Sequence Number"
+                value={newCategorySequence}
+                onChange={(e) => setNewCategorySequence(e.target.value)}
+                className="w-24 px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-slate-900 transition-all font-bold"
+              />
+              <button
+                type="submit"
+                className="bg-slate-900 text-white px-8 rounded-xl font-black text-xs uppercase tracking-widest whitespace-nowrap"
+              >
+                Save Category
+              </button>
+            </div>
           </form>
         </div>
       )}
@@ -195,20 +231,54 @@ const Category = ({ token }) => {
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ${expandedCategory === cat._id ? "bg-white/10 text-white" : "bg-slate-100 text-slate-900"}`}
                   >
-                    {cat.name.charAt(0).toUpperCase()}
+                    {cat.sequence || 0}
                   </div>
                   <div>
-                    <p className="font-black uppercase tracking-tight text-sm">
-                      {cat.name}
-                    </p>
-                    <p
-                      className={`text-[10px] uppercase font-bold tracking-widest ${expandedCategory === cat._id ? "text-slate-400" : "text-slate-500"}`}
-                    >
-                      {cat.subCategories.length} Subcategories
-                    </p>
+                    {isEditing === cat._id ? (
+                      <form onClick={e => e.stopPropagation()} onSubmit={handleUpdateCategory} className="flex items-center gap-2">
+                        <input 
+                          type="text"
+                          value={editName}
+                          onChange={e => setEditName(e.target.value)}
+                          className="px-2 py-1 bg-white border border-slate-300 rounded text-slate-900 font-bold text-sm w-32"
+                          autoFocus
+                        />
+                        <input 
+                          type="number"
+                          value={editSequence}
+                          onChange={e => setEditSequence(e.target.value)}
+                          className="px-2 py-1 bg-white border border-slate-300 rounded text-slate-900 font-bold text-sm w-16"
+                        />
+                        <button type="submit" className="text-emerald-500 hover:text-emerald-400 font-black text-[10px] uppercase">Save</button>
+                        <button type="button" onClick={() => setIsEditing(null)} className="text-rose-500 hover:text-rose-400 font-black text-[10px] uppercase">Cancel</button>
+                      </form>
+                    ) : (
+                      <>
+                        <p className="font-black uppercase tracking-tight text-sm">
+                          {cat.name}
+                        </p>
+                        <p
+                          className={`text-[10px] uppercase font-bold tracking-widest ${expandedCategory === cat._id ? "text-slate-400" : "text-slate-500"}`}
+                        >
+                          {cat.subCategories.length} Subcategories
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditing(cat._id);
+                      setEditName(cat.name);
+                      setEditSequence(cat.sequence || 0);
+                    }}
+                    className={`p-2 rounded-lg transition-all ${expandedCategory === cat._id ? "hover:bg-slate-700 text-white/50 hover:text-white" : "text-slate-300 hover:text-slate-600 hover:bg-slate-100"}`}
+                    title="Edit Category"
+                  >
+                    <FaEdit size={14} />
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
