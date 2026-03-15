@@ -5,8 +5,11 @@ import { toast } from 'react-toastify';
 
 const Login = ({ setToken }) => {
 
+    const [view, setView] = useState('login'); // login, forgot, reset
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [otp, setOtp] = useState('');
+    const [newPassword, setNewPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
     const onSubmitHandler = async (e) => {
@@ -28,6 +31,47 @@ const Login = ({ setToken }) => {
         }
     }
 
+    const onForgotHandler = async (e) => {
+        try {
+            e.preventDefault();
+            setLoading(true);
+            const response = await axios.post(backendUrl + '/api/user/request-reset-otp', { email });
+            if (response.data.success) {
+                toast.success(response.data.message);
+                setView('reset');
+            } else {
+                toast.error(response.data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const onResetHandler = async (e) => {
+        try {
+            e.preventDefault();
+            setLoading(true);
+            const response = await axios.post(backendUrl + '/api/user/reset-password', {
+                email,
+                otp,
+                newPassword
+            });
+            if (response.data.success) {
+                toast.success(response.data.message);
+                setView('login');
+                setPassword('');
+            } else {
+                toast.error(response.data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     return (
         <div className='min-h-screen flex items-center justify-center w-full bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 px-4'>
             <div className='bg-white shadow-2xl rounded-3xl px-8 py-10 w-full max-w-md border border-gray-100 transform transition-all hover:scale-[1.01]'>
@@ -40,63 +84,165 @@ const Login = ({ setToken }) => {
                         </svg>
                     </div>
                     <h1 className='text-3xl font-bold text-gray-900 mb-2 tracking-tight'>Admin Panel</h1>
-                    <p className='text-gray-500 text-sm font-medium'>Sign in to manage your store</p>
+                    <p className='text-gray-500 text-sm font-medium'>
+                        {view === 'login' ? 'Sign in to manage your store' : view === 'forgot' ? 'Request password reset OTP' : 'Set your new password'}
+                    </p>
                 </div>
 
-                {/* Form Section */}
-                <form onSubmit={onSubmitHandler} className='space-y-6'>
+                {/* Login View */}
+                {view === 'login' && (
+                    <form onSubmit={onSubmitHandler} className='space-y-6'>
+                        <div className='group'>
+                            <label className='text-sm font-semibold text-gray-700 mb-2 block flex items-center gap-2'>
+                                <svg className='w-4 h-4 text-gray-500' fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                </svg>
+                                Email Address
+                            </label>
+                            <input
+                                onChange={(e) => setEmail(e.target.value)}
+                                value={email}
+                                className='rounded-xl w-full px-4 py-3.5 border-2 border-gray-200 outline-none focus:border-gray-800 focus:ring-4 focus:ring-gray-100 transition-all duration-300 text-gray-700 placeholder:text-gray-400'
+                                type="email"
+                                placeholder='admin@example.com'
+                                required
+                            />
+                        </div>
 
-                    {/* Email Field */}
-                    <div className='group'>
-                        <label className='text-sm font-semibold text-gray-700 mb-2 block flex items-center gap-2'>
-                            <svg className='w-4 h-4 text-gray-500' fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                            </svg>
-                            Email Address
-                        </label>
-                        <input
-                            onChange={(e) => setEmail(e.target.value)}
-                            value={email}
-                            className='rounded-xl w-full px-4 py-3.5 border-2 border-gray-200 outline-none focus:border-gray-800 focus:ring-4 focus:ring-gray-100 transition-all duration-300 text-gray-700 placeholder:text-gray-400'
-                            type="email"
-                            placeholder='admin@example.com'
-                            required
-                        />
-                    </div>
+                        <div className='group'>
+                            <div className='flex justify-between items-center mb-2'>
+                                <label className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
+                                    <svg className='w-4 h-4 text-gray-500' fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                    Password
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setView('forgot')}
+                                    className='text-xs font-bold text-gray-500 hover:text-gray-900 transition-all'
+                                >
+                                    Forgot password?
+                                </button>
+                            </div>
+                            <input
+                                onChange={(e) => setPassword(e.target.value)}
+                                value={password}
+                                className='rounded-xl w-full px-4 py-3.5 border-2 border-gray-200 outline-none focus:border-gray-800 focus:ring-4 focus:ring-gray-100 transition-all duration-300 text-gray-700 placeholder:text-gray-400'
+                                type="password"
+                                placeholder='Enter your password'
+                                required
+                            />
+                        </div>
 
-                    {/* Password Field */}
-                    <div className='group'>
-                        <label className='text-sm font-semibold text-gray-700 mb-2 block flex items-center gap-2'>
-                            <svg className='w-4 h-4 text-gray-500' fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                            Password
-                        </label>
-                        <input
-                            onChange={(e) => setPassword(e.target.value)}
-                            value={password}
-                            className='rounded-xl w-full px-4 py-3.5 border-2 border-gray-200 outline-none focus:border-gray-800 focus:ring-4 focus:ring-gray-100 transition-all duration-300 text-gray-700 placeholder:text-gray-400'
-                            type="password"
-                            placeholder='Enter your password'
-                            required
-                        />
-                    </div>
+                        <button
+                            className='mt-8 w-full py-4 px-4 rounded-xl text-white font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0 transition-all duration-300 text-base tracking-wide hover:from-gray-800 hover:via-gray-700 hover:to-gray-600 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex justify-center items-center gap-2'
+                            type='submit'
+                            disabled={loading}
+                        >
+                            {loading && (
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            )}
+                            {loading ? 'Signing In...' : 'Sign In'}
+                        </button>
+                    </form>
+                )}
 
-                    {/* Submit Button */}
-                    <button
-                        className='mt-8 w-full py-4 px-4 rounded-xl text-white font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0 transition-all duration-300 text-base tracking-wide hover:from-gray-800 hover:via-gray-700 hover:to-gray-600 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex justify-center items-center gap-2'
-                        type='submit'
-                        disabled={loading}
-                    >
-                        {loading && (
-                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        )}
-                        {loading ? 'Signing In...' : 'Sign In'}
-                    </button>
-                </form>
+                {/* Forgot Password View */}
+                {view === 'forgot' && (
+                    <form onSubmit={onForgotHandler} className='space-y-6'>
+                        <div className='group'>
+                            <label className='text-sm font-semibold text-gray-700 mb-2 block flex items-center gap-2'>
+                                <svg className='w-4 h-4 text-gray-500' fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                </svg>
+                                Registered Email Address
+                            </label>
+                            <input
+                                onChange={(e) => setEmail(e.target.value)}
+                                value={email}
+                                className='rounded-xl w-full px-4 py-3.5 border-2 border-gray-200 outline-none focus:border-gray-800 focus:ring-4 focus:ring-gray-100 transition-all duration-300 text-gray-700 placeholder:text-gray-400'
+                                type="email"
+                                placeholder='admin@example.com'
+                                required
+                            />
+                            <p className='text-[10px] text-gray-400 mt-2 font-medium'>
+                                We will send a 6-digit OTP to your registered email address.
+                            </p>
+                        </div>
+
+                        <div className='flex flex-col gap-3'>
+                            <button
+                                className='w-full py-4 px-4 rounded-xl text-white font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0 transition-all duration-300 text-base tracking-wide disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2'
+                                type='submit'
+                                disabled={loading}
+                            >
+                                {loading ? 'Sending OTP...' : 'Send OTP'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setView('login')}
+                                className='text-sm font-bold text-gray-500 hover:text-gray-900 transition-all py-2'
+                            >
+                                Back to Login
+                            </button>
+                        </div>
+                    </form>
+                )}
+
+                {/* Reset Password View */}
+                {view === 'reset' && (
+                    <form onSubmit={onResetHandler} className='space-y-6'>
+                        <div className='group'>
+                            <label className='text-sm font-semibold text-gray-700 mb-2 block'>
+                                OTP Code (Sent to {email})
+                            </label>
+                            <input
+                                onChange={(e) => setOtp(e.target.value)}
+                                value={otp}
+                                className='rounded-xl w-full px-4 py-3.5 border-2 border-gray-200 outline-none focus:border-gray-800 focus:ring-4 focus:ring-gray-100 transition-all duration-300 text-gray-700 text-center tracking-[1em] font-bold'
+                                type="text"
+                                maxLength="6"
+                                placeholder='000000'
+                                required
+                            />
+                        </div>
+
+                        <div className='group'>
+                            <label className='text-sm font-semibold text-gray-700 mb-2 block'>
+                                New Password
+                            </label>
+                            <input
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                value={newPassword}
+                                className='rounded-xl w-full px-4 py-3.5 border-2 border-gray-200 outline-none focus:border-gray-800 focus:ring-4 focus:ring-gray-100 transition-all duration-300 text-gray-700'
+                                type="password"
+                                placeholder='Minimum 8 characters'
+                                required
+                            />
+                        </div>
+
+                        <div className='flex flex-col gap-3'>
+                            <button
+                                className='w-full py-4 px-4 rounded-xl text-white font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0 transition-all duration-300 text-base tracking-wide disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2'
+                                type='submit'
+                                disabled={loading}
+                            >
+                                {loading ? 'Resetting...' : 'Reset Password'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setView('forgot')}
+                                className='text-sm font-bold text-gray-500 hover:text-gray-900 transition-all py-2'
+                            >
+                                Switch Email Address
+                            </button>
+                        </div>
+                    </form>
+                )}
 
                 {/* Footer */}
                 <div className='mt-8 text-center'>
