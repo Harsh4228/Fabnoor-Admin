@@ -67,6 +67,7 @@ const Sidebar = () => {
             { to: "/orders", icon: assets.order_icon, label: "Orders" },
             { to: "/reels", icon: assets.order_icon, label: "Reels" },
             { to: "/category", icon: assets.parcel_icon, label: "Categories" },
+            { to: "/hero", icon: assets.add_icon, label: "Hero Slides" },
             {
               to: "/discount",
               icon: assets.add_icon,
@@ -108,6 +109,7 @@ const Sidebar = () => {
             { to: "/orders", icon: assets.order_icon, label: "Orders" },
             { to: "/reels", icon: assets.order_icon, label: "Reels" },
             { to: "/category", icon: assets.parcel_icon, label: "Categories" },
+            { to: "/hero", icon: assets.add_icon, label: "Hero Slides" },
             {
               to: "/discount",
               icon: assets.add_icon,

@@ -13,6 +13,7 @@ import ReelsAdmin from "./pages/ReelsAdmin";
 import GlobalDiscount from "./pages/GlobalDiscount";
 import ScrollToTop from "./components/ScrollToTop";
 import Category from "./pages/Category";
+import HeroImages from "./pages/HeroImages";
 
 const App = () => {
   const [token, setToken] = useState(
@@ -55,6 +56,10 @@ const App = () => {
                   <Route
                     path="/category"
                     element={<Category token={token} />}
+                  />
+                  <Route
+                    path="/hero"
+                    element={<HeroImages token={token} />}
                   />
                   <Route path="*" element={<List token={token} />} />
                 </Routes>
