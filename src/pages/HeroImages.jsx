@@ -3,10 +3,44 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { backendUrl } from "../constants";
 
+/* ================= CONFIRM MODAL ================= */
+const ConfirmModal = ({ onConfirm, onCancel }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onCancel} />
+    <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-80 mx-4 flex flex-col items-center gap-4">
+      <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+        <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </div>
+      <div className="text-center">
+        <p className="font-bold text-slate-800 text-base">Remove Hero Image?</p>
+        <p className="text-sm text-slate-500 mt-1">This will permanently delete the image and cannot be undone.</p>
+      </div>
+      <div className="flex gap-3 w-full">
+        <button
+          onClick={onCancel}
+          className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          className="flex-1 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-all shadow-md"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 const HeroImages = ({ token }) => {
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
   const fileRef = useRef(null);
 
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
@@ -50,8 +84,8 @@ const HeroImages = ({ token }) => {
 
   /* ================= DELETE ================= */
   const handleDelete = async (id) => {
-    if (!window.confirm("Remove this hero image?")) return;
     setDeletingId(id);
+    setConfirmId(null);
     try {
       const { data } = await axios.post(`${backendUrl}/api/hero/remove`, { id }, authHeader);
       if (data.success) {
@@ -62,6 +96,22 @@ const HeroImages = ({ token }) => {
       toast.error(err.response?.data?.message || err.message);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  /* ================= DOWNLOAD ================= */
+  const handleDownload = async (url, index) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const ext = url.split(".").pop().split("?")[0] || "jpg";
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `hero-slide-${index + 1}.${ext}`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      window.open(url, "_blank");
     }
   };
 
@@ -86,6 +136,13 @@ const HeroImages = ({ token }) => {
 
   return (
     <div className="fade-in">
+      {/* Confirm Modal */}
+      {confirmId && (
+        <ConfirmModal
+          onConfirm={() => handleDelete(confirmId)}
+          onCancel={() => setConfirmId(null)}
+        />
+      )}
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
@@ -178,22 +235,35 @@ const HeroImages = ({ token }) => {
                   </button>
                 </div>
 
-                {/* Delete */}
-                <button
-                  onClick={() => handleDelete(img._id)}
-                  disabled={deletingId === img._id}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 text-red-500 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
-                >
-                  {deletingId === img._id ? (
-                    <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                  ) : (
+                <div className="flex gap-1">
+                  {/* Download */}
+                  <button
+                    onClick={() => handleDownload(img.url, index)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:border-emerald-400 hover:text-emerald-600 transition-all"
+                    title="Download image"
+                  >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
-                  )}
-                  Remove
-                </button>
+                  </button>
+
+                  {/* Delete */}
+                  <button
+                    onClick={() => setConfirmId(img._id)}
+                    disabled={deletingId === img._id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 text-red-500 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                  >
+                    {deletingId === img._id ? (
+                      <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                    Remove
+                  </button>
+                </div>
               </div>
             </div>
           ))}
