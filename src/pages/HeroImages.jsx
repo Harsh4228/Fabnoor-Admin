@@ -97,6 +97,7 @@ const HeroImages = ({ token }) => {
     } finally {
       setDeletingId(null);
     }
+    
   };
 
   /* ================= DOWNLOAD ================= */
