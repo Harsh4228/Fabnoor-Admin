@@ -1,154 +1,165 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { assets } from "../assets/assets.js";
+
+/* ── SVG icon components ──────────────────────────────────── */
+const Icon = ({ d, d2 }) => (
+  <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={d} />
+    {d2 && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={d2} />}
+  </svg>
+);
+
+const ICONS = {
+  dashboard: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
+  add:      "M12 4v16m8-8H4",
+  list:     "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
+  orders:   "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z",
+  reels:    "M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z",
+  category: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z",
+  hero:     "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
+  discount: "M7 7h.01M17 17h.01M7 17L17 7M6 6m0 0a1 1 0 100 2 1 1 0 000-2zm11 11a1 1 0 100 2 1 1 0 000-2z",
+  users:    "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
+};
+
+const NAV = [
+  { section: "Overview" },
+  { to: "/dashboard", icon: ICONS.dashboard, label: "Dashboard" },
+  { section: "Products" },
+  { to: "/add",      icon: ICONS.add,      label: "Add Product" },
+  { to: "/list",     icon: ICONS.list,     label: "Products" },
+  { section: "Store" },
+  { to: "/orders",   icon: ICONS.orders,   label: "Orders" },
+  { to: "/category", icon: ICONS.category, label: "Categories" },
+  { to: "/hero",     icon: ICONS.hero,     label: "Hero Slides" },
+  { to: "/reels",    icon: ICONS.reels,    label: "Reels" },
+  { section: "Settings" },
+  { to: "/discount", icon: ICONS.discount, label: "Global Discount" },
+  { to: "/users",    icon: ICONS.users,    label: "Users" },
+];
+
+/* ── Shared nav-link renderer ─────────────────────────────── */
+const NavItem = ({ item, onClick }) => (
+  <NavLink
+    to={item.to}
+    onClick={onClick}
+    className={({ isActive }) =>
+      `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group ${
+        isActive
+          ? "bg-blue-600 text-white shadow-md shadow-blue-900/30"
+          : "text-slate-400 hover:bg-slate-800 hover:text-white"
+      }`
+    }
+  >
+    {({ isActive }) => (
+      <>
+        <span className={`transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-white"}`}>
+          <Icon d={item.icon} />
+        </span>
+        <span className="text-[13.5px] font-medium leading-none">{item.label}</span>
+      </>
+    )}
+  </NavLink>
+);
+
+/* ── Section label ────────────────────────────────────────── */
+const SectionLabel = ({ label }) => (
+  <p className="px-3 pt-4 pb-1 text-[10px] font-bold text-slate-600 uppercase tracking-[0.18em] select-none">
+    {label}
+  </p>
+);
 
 const Sidebar = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+
+  const navContent = (
+    <nav className="flex flex-col px-3 pb-4 flex-1 overflow-y-auto">
+      {NAV.map((item, i) =>
+        item.section ? (
+          <SectionLabel key={i} label={item.section} />
+        ) : (
+          <NavItem key={item.to} item={item} onClick={close} />
+        )
+      )}
+    </nav>
+  );
 
   return (
     <>
-      {/* Mobile Menu Toggle Button */}
+      {/* ── Mobile hamburger (top-left, inside header area) ── */}
       <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="md:hidden fixed bottom-6 right-6 z-50 bg-blue-600 text-white p-4 rounded-full shadow-2xl transition-all active:scale-95"
+        onClick={() => setOpen(true)}
+        className="md:hidden fixed top-3.5 left-4 z-50 p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+        aria-label="Open menu"
       >
-        {isMobileMenuOpen ? (
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        ) : (
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        )}
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
       </button>
 
-      {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
+      {/* ── Mobile overlay ─────────────────────────────────── */}
+      {open && (
         <div
-          className="md:hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40"
-          onClick={() => setIsMobileMenuOpen(false)}
+          className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          onClick={close}
         />
       )}
 
-      {/* Mobile Sidebar */}
+      {/* ── Mobile drawer ──────────────────────────────────── */}
       <div
-        className={`md:hidden fixed left-0 top-0 h-full w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`md:hidden fixed inset-y-0 left-0 w-64 bg-slate-900 z-50 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        <div className="p-6 border-b border-slate-100">
-          <p className="font-bold text-lg text-slate-800 tracking-tight">
-            Administration
-          </p>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <span className="text-white font-bold text-sm tracking-tight">Fabnoor Admin</span>
+          </div>
+          <button onClick={close} className="text-slate-400 hover:text-white transition-colors p-1">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <div className="p-4 flex flex-col gap-1">
-          {[
-            { to: "/dashboard", icon: assets.add_icon, label: "Dashboard" },
-            { to: "/add", icon: assets.add_icon, label: "Add Items" },
-            { to: "/list", icon: assets.order_icon, label: "List Items" },
-            { to: "/orders", icon: assets.order_icon, label: "Orders" },
-            { to: "/reels", icon: assets.order_icon, label: "Reels" },
-            { to: "/category", icon: assets.parcel_icon, label: "Categories" },
-            { to: "/hero", icon: assets.add_icon, label: "Hero Slides" },
-            {
-              to: "/discount",
-              icon: assets.add_icon,
-              label: "Global Discount",
-            },
-            { to: "/users", icon: assets.parcel_icon, label: "Users" },
-          ].map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                  isActive
-                    ? "bg-blue-50 text-blue-700 font-semibold"
-                    : "text-slate-600 hover:bg-slate-50"
-                }`
-              }
-            >
-              <img className="w-5 h-5 opacity-80" src={item.icon} alt="" />
-              <span className="text-sm">{item.label}</span>
-            </NavLink>
-          ))}
+        {navContent}
+        <div className="px-5 py-4 border-t border-slate-800">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] text-slate-500 font-medium">System Online</span>
+          </div>
         </div>
       </div>
 
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 h-full bg-slate-900 text-slate-300 flex-shrink-0">
-        <div className="flex flex-col gap-1 p-4 h-full">
-          <div className="px-4 mb-6 mt-4">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
-              Main Navigation
-            </p>
+      {/* ── Desktop sidebar ────────────────────────────────── */}
+      <aside className="hidden md:flex flex-col w-60 h-full bg-slate-900 flex-shrink-0 border-r border-slate-800">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-slate-800">
+          <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
           </div>
-
-          {[
-            { to: "/dashboard", icon: assets.add_icon, label: "Dashboard" },
-            { to: "/add", icon: assets.add_icon, label: "Add Items" },
-            { to: "/list", icon: assets.order_icon, label: "List Items" },
-            { to: "/orders", icon: assets.order_icon, label: "Orders" },
-            { to: "/reels", icon: assets.order_icon, label: "Reels" },
-            { to: "/category", icon: assets.parcel_icon, label: "Categories" },
-            { to: "/hero", icon: assets.add_icon, label: "Hero Slides" },
-            {
-              to: "/discount",
-              icon: assets.add_icon,
-              label: "Global Discount",
-            },
-            { to: "/users", icon: assets.parcel_icon, label: "Users" },
-          ].map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40 font-medium"
-                    : "hover:bg-slate-800 hover:text-white"
-                }`
-              }
-            >
-              <img
-                className={`w-5 h-5 transition-all group-hover:scale-110 brightness-0 invert opacity-70`}
-                src={item.icon}
-                alt=""
-              />
-              <span className="text-[14px]">{item.label}</span>
-            </NavLink>
-          ))}
-
-          {/* Spacer */}
-          <div className="mt-auto p-4 bg-slate-800/50 rounded-2xl">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <p className="text-xs font-semibold text-slate-400">
-                System Online
-              </p>
-            </div>
-            <p className="text-[10px] text-slate-500">v2.1.0-fabnoor-admin</p>
+          <div>
+            <p className="text-white text-sm font-bold leading-none">Fabnoor</p>
+            <p className="text-slate-500 text-[10px] font-medium mt-0.5 tracking-wider uppercase">Admin Panel</p>
           </div>
+        </div>
+
+        {navContent}
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-slate-800">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] text-slate-400 font-semibold">System Online</span>
+          </div>
+          <p className="text-[10px] text-slate-600">v2.1.0-fabnoor-admin</p>
         </div>
       </aside>
     </>
