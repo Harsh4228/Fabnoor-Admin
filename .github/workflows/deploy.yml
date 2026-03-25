@@ -1,0 +1,30 @@
+name: Deploy Admin
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Admin
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            export PATH=$PATH:/root/.nvm/versions/node/v24.14.0/bin
+
+            cd /var/www/fabnoor/Fabnoor-Admin
+
+            git pull origin main
+
+            npm install
+
+            npm run build
+
+            pm2 restart admin
