@@ -182,6 +182,10 @@ const List = ({ token }) => {
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriesData, setCategoriesData] = useState([]);
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterSubCategory, setFilterSubCategory] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 12;
 
   /* ================= FETCH ================= */
   const fetchProducts = async () => {
@@ -543,12 +547,12 @@ const List = ({ token }) => {
               type="text"
               placeholder="Search products..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-lg shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm"
             />
             {searchTerm && (
               <button
-                onClick={() => setSearchTerm("")}
+                onClick={() => { setSearchTerm(""); setCurrentPage(1); }}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
               >
                 <svg
@@ -590,6 +594,57 @@ const List = ({ token }) => {
         </div>
       </div>
 
+      {/* ================= FILTER BAR ================= */}
+      <div className="flex flex-wrap gap-3 mb-4 items-end">
+        {/* Category filter */}
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</span>
+          <select
+            value={filterCategory}
+            onChange={(e) => { setFilterCategory(e.target.value); setFilterSubCategory(""); setCurrentPage(1); }}
+            className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg shadow-sm outline-none focus:border-blue-500 text-sm min-w-[150px]"
+          >
+            <option value="">All Categories</option>
+            {categoriesData.map((c) => (
+              <option key={c._id || c.name} value={c.name}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* SubCategory filter */}
+        {(() => {
+          const cat = categoriesData.find((c) => c.name === filterCategory);
+          const subs = cat?.subCategories || [];
+          if (!filterCategory || subs.length === 0) return null;
+          return (
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sub-Category</span>
+              <select
+                value={filterSubCategory}
+                onChange={(e) => { setFilterSubCategory(e.target.value); setCurrentPage(1); }}
+                className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg shadow-sm outline-none focus:border-blue-500 text-sm min-w-[150px]"
+              >
+                <option value="">All Sub-Categories</option>
+                {subs.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          );
+        })()}
+
+        {/* Clear filters */}
+        {(filterCategory || filterSubCategory) && (
+          <button
+            onClick={() => { setFilterCategory(""); setFilterSubCategory(""); setCurrentPage(1); }}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 border border-rose-200 bg-rose-50 hover:bg-rose-100 rounded-lg transition-all"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+            Clear Filters
+          </button>
+        )}
+      </div>
+
       {/* PRODUCT LIST */}
       {(() => {
         const filteredProducts = products.filter((p) => {
@@ -600,15 +655,29 @@ const List = ({ token }) => {
               v.code?.toLowerCase().includes(searchLower) ||
               (v.fabric || v.type || "").toLowerCase().includes(searchLower),
           );
-          return matchesName || matchesVariants;
+          const matchesCategory = !filterCategory || (
+            Array.isArray(p.category)
+              ? p.category.some((c) => c === filterCategory)
+              : p.category === filterCategory
+          );
+          const matchesSubCategory = !filterSubCategory || (
+            Array.isArray(p.subCategory)
+              ? p.subCategory.some((s) => s === filterSubCategory)
+              : p.subCategory === filterSubCategory
+          );
+          return (matchesName || matchesVariants) && matchesCategory && matchesSubCategory;
         });
+
+        const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+        const safePage = Math.min(currentPage, totalPages || 1);
+        const pagedProducts = filteredProducts.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
         if (filteredProducts.length === 0) {
           return (
             <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
               <p className="text-xl font-semibold text-gray-400">
-                {searchTerm
-                  ? `No results for "${searchTerm}"`
+                {searchTerm || filterCategory
+                  ? `No results found`
                   : "No products found"}
               </p>
             </div>
@@ -616,6 +685,12 @@ const List = ({ token }) => {
         }
 
         return (
+          <>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-slate-500 font-medium">
+              Showing <span className="font-bold text-slate-700">{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredProducts.length)}</span> of <span className="font-bold text-slate-700">{filteredProducts.length}</span> products
+            </p>
+          </div>
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             {/* Desktop Header */}
             <div className="hidden md:grid md:grid-cols-[80px_1fr_200px] gap-3 p-4 bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest shadow-inner">
@@ -625,7 +700,7 @@ const List = ({ token }) => {
             </div>
 
             <div className="divide-y divide-slate-100">
-              {filteredProducts.map((p) => (
+              {pagedProducts.map((p) => (
                 <div
                   key={p._id}
                   className="grid grid-cols-1 md:grid-cols-[80px_1fr_200px] gap-3 p-4 items-center hover:bg-slate-50/50 transition-all cursor-pointer group"
@@ -778,6 +853,53 @@ const List = ({ token }) => {
               ))}
             </div>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-blue-400 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((pg) => pg === 1 || pg === totalPages || Math.abs(pg - safePage) <= 2)
+                .reduce((acc, pg, idx, arr) => {
+                  if (idx > 0 && pg - arr[idx - 1] > 1) acc.push("...");
+                  acc.push(pg);
+                  return acc;
+                }, [])
+                .map((pg, idx) =>
+                  pg === "..." ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-slate-400 text-sm">…</span>
+                  ) : (
+                    <button
+                      key={pg}
+                      onClick={() => setCurrentPage(pg)}
+                      className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-bold transition-all shadow-sm ${
+                        pg === safePage
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-white border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600"
+                      }`}
+                    >
+                      {pg}
+                    </button>
+                  )
+                )}
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-blue-400 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
+          </>
         );
       })()}
 
