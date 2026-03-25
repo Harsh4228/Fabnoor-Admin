@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { assets } from "../assets/assets";
 import html2pdf from "html2pdf.js";
 import { formatNumber } from "../utils/price";
+import { useLocation } from "react-router-dom";
 
 /* ================= CONFIG ================= */
 const STATUS_TABS = [
@@ -17,8 +18,11 @@ const STATUS_TABS = [
 const PAGE_SIZE = 6;
 
 const Order = ({ token }) => {
+  const location = useLocation();
   const [orders, setOrders] = useState([]);
-  const [activeStatus, setActiveStatus] = useState("Order Placed");
+  const [activeStatus, setActiveStatus] = useState(
+    STATUS_TABS.includes(location.state?.status) ? location.state.status : "Order Placed"
+  );
   const [page, setPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [statusUpdating, setStatusUpdating] = useState(null);

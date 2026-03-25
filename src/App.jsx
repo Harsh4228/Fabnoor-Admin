@@ -14,6 +14,7 @@ import GlobalDiscount from "./pages/GlobalDiscount";
 import ScrollToTop from "./components/ScrollToTop";
 import Category from "./pages/Category";
 import HeroImages from "./pages/HeroImages";
+import Dashboard from "./pages/Dashboard";
 
 const App = () => {
   const [token, setToken] = useState(
@@ -44,6 +45,8 @@ const App = () => {
             <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8">
               <div className="max-w-[1600px] mx-auto">
                 <Routes>
+                  <Route path="/" element={<Dashboard token={token} />} />
+                  <Route path="/dashboard" element={<Dashboard token={token} />} />
                   <Route path="/add" element={<Add token={token} />} />
                   <Route path="/list" element={<List token={token} />} />
                   <Route path="/orders" element={<Orders token={token} />} />
@@ -61,7 +64,7 @@ const App = () => {
                     path="/hero"
                     element={<HeroImages token={token} />}
                   />
-                  <Route path="*" element={<List token={token} />} />
+                  <Route path="*" element={<Dashboard token={token} />} />
                 </Routes>
               </div>
             </main>

@@ -62,6 +62,7 @@ const Sidebar = () => {
         </div>
         <div className="p-4 flex flex-col gap-1">
           {[
+            { to: "/dashboard", icon: assets.add_icon, label: "Dashboard" },
             { to: "/add", icon: assets.add_icon, label: "Add Items" },
             { to: "/list", icon: assets.order_icon, label: "List Items" },
             { to: "/orders", icon: assets.order_icon, label: "Orders" },
@@ -104,6 +105,7 @@ const Sidebar = () => {
           </div>
 
           {[
+            { to: "/dashboard", icon: assets.add_icon, label: "Dashboard" },
             { to: "/add", icon: assets.add_icon, label: "Add Items" },
             { to: "/list", icon: assets.order_icon, label: "List Items" },
             { to: "/orders", icon: assets.order_icon, label: "Orders" },

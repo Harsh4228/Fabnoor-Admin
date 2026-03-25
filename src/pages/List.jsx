@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { backendUrl, currency } from "../constants";
 import { toast } from "react-toastify";
@@ -20,6 +20,77 @@ const SIZES = [
 
 // Helper to get a safe key for image uploads
 const getKey = (v) => v.trim().toLowerCase().replace(/\s+/g, "_");
+
+/* ================= CUSTOM FILTER DROPDOWN ================= */
+const FilterSelect = ({ value, onChange, options, placeholder }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div ref={ref} className="relative min-w-[160px]">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`w-full flex items-center justify-between gap-2 pl-3 pr-3 py-2 rounded-xl border text-sm font-semibold transition-all ${
+          open
+            ? "bg-white border-blue-500 ring-2 ring-blue-500/10 text-slate-800"
+            : value
+            ? "bg-blue-50 border-blue-300 text-blue-700"
+            : "bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-white"
+        }`}
+      >
+        <span className="truncate">{selected ? selected.label : placeholder}</span>
+        <svg
+          className={`w-3.5 h-3.5 flex-shrink-0 transition-transform ${open ? "rotate-180 text-blue-500" : "text-slate-400"}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1.5 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+          <ul className="py-1 max-h-52 overflow-y-auto">
+            <li>
+              <button
+                type="button"
+                onClick={() => { onChange(""); setOpen(false); }}
+                className={`w-full text-left px-3 py-2 text-sm font-semibold transition-colors ${
+                  value === "" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                }`}
+              >
+                {placeholder}
+              </button>
+            </li>
+            {options.map((o) => (
+              <li key={o.value}>
+                <button
+                  type="button"
+                  onClick={() => { onChange(o.value); setOpen(false); }}
+                  className={`w-full text-left px-3 py-2 text-sm font-semibold transition-colors ${
+                    value === o.value
+                      ? "bg-slate-900 text-white"
+                      : "text-slate-700 hover:bg-blue-50 hover:text-blue-700"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
 
 /* ================= QUICK EDIT COMPONENT ================= */
 const VariantQuickEdit = ({
@@ -184,6 +255,7 @@ const List = ({ token }) => {
   const [categoriesData, setCategoriesData] = useState([]);
   const [filterCategory, setFilterCategory] = useState("");
   const [filterSubCategory, setFilterSubCategory] = useState("");
+  const [filterLowStock, setFilterLowStock] = useState(""); // "" | "low" | "out"
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 12;
 
@@ -512,8 +584,11 @@ const List = ({ token }) => {
     }
   };
 
+  const topRef = useRef(null);
+  const scrollTop = () => topRef.current?.scrollIntoView({ behavior: "smooth" });
+
   return (
-    <div className="fade-in">
+    <div className="fade-in" ref={topRef}>
       {/* Page Header Area */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div>
@@ -595,54 +670,77 @@ const List = ({ token }) => {
       </div>
 
       {/* ================= FILTER BAR ================= */}
-      <div className="flex flex-wrap gap-3 mb-4 items-end">
-        {/* Category filter */}
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category</span>
-          <select
-            value={filterCategory}
-            onChange={(e) => { setFilterCategory(e.target.value); setFilterSubCategory(""); setCurrentPage(1); }}
-            className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg shadow-sm outline-none focus:border-blue-500 text-sm min-w-[150px]"
-          >
-            <option value="">All Categories</option>
-            {categoriesData.map((c) => (
-              <option key={c._id || c.name} value={c.name}>{c.name}</option>
-            ))}
-          </select>
-        </div>
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-4">
+        <div className="flex flex-wrap gap-4 items-end">
 
-        {/* SubCategory filter */}
-        {(() => {
-          const cat = categoriesData.find((c) => c.name === filterCategory);
-          const subs = cat?.subCategories || [];
-          if (!filterCategory || subs.length === 0) return null;
-          return (
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sub-Category</span>
-              <select
-                value={filterSubCategory}
-                onChange={(e) => { setFilterSubCategory(e.target.value); setCurrentPage(1); }}
-                className="pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-lg shadow-sm outline-none focus:border-blue-500 text-sm min-w-[150px]"
-              >
-                <option value="">All Sub-Categories</option>
-                {subs.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+          {/* Category */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Category</label>
+            <FilterSelect
+              value={filterCategory}
+              onChange={(v) => { setFilterCategory(v); setFilterSubCategory(""); setCurrentPage(1); }}
+              options={categoriesData.map((c) => ({ value: c.name, label: c.name }))}
+              placeholder="All Categories"
+            />
+          </div>
+
+          {/* Sub-Category — only if category selected and has subs */}
+          {(() => {
+            const cat = categoriesData.find((c) => c.name === filterCategory);
+            const subs = cat?.subCategories || [];
+            if (!filterCategory || subs.length === 0) return null;
+            return (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Sub-Category</label>
+                <FilterSelect
+                  value={filterSubCategory}
+                  onChange={(v) => { setFilterSubCategory(v); setCurrentPage(1); }}
+                  options={subs.map((s) => ({ value: s, label: s }))}
+                  placeholder="All Sub-Categories"
+                />
+              </div>
+            );
+          })()}
+
+          {/* Stock Status pills */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Stock Status</label>
+            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              {[
+                { key: "",    label: "All" },
+                { key: "low", label: "⚠ Low Stock" },
+                { key: "out", label: "✕ Out of Stock" },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => { setFilterLowStock(key); setCurrentPage(1); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    filterLowStock === key
+                      ? key === "out"
+                        ? "bg-red-600 text-white shadow-sm"
+                        : key === "low"
+                        ? "bg-amber-500 text-white shadow-sm"
+                        : "bg-slate-900 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-          );
-        })()}
+          </div>
 
-        {/* Clear filters */}
-        {(filterCategory || filterSubCategory) && (
-          <button
-            onClick={() => { setFilterCategory(""); setFilterSubCategory(""); setCurrentPage(1); }}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 border border-rose-200 bg-rose-50 hover:bg-rose-100 rounded-lg transition-all"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-            Clear Filters
-          </button>
-        )}
+          {/* Clear all */}
+          {(filterCategory || filterSubCategory || filterLowStock) && (
+            <button
+              onClick={() => { setFilterCategory(""); setFilterSubCategory(""); setFilterLowStock(""); setCurrentPage(1); }}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 border border-rose-200 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all self-end"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       {/* PRODUCT LIST */}
@@ -665,7 +763,12 @@ const List = ({ token }) => {
               ? p.subCategory.some((s) => s === filterSubCategory)
               : p.subCategory === filterSubCategory
           );
-          return (matchesName || matchesVariants) && matchesCategory && matchesSubCategory;
+          const matchesStock = !filterLowStock || (() => {
+            if (filterLowStock === "out") return p.variants?.some((v) => Number(v.stock) === 0);
+            if (filterLowStock === "low") return p.variants?.some((v) => Number(v.stock) > 0 && Number(v.stock) < 6);
+            return true;
+          })();
+          return (matchesName || matchesVariants) && matchesCategory && matchesSubCategory && matchesStock;
         });
 
         const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
@@ -676,7 +779,7 @@ const List = ({ token }) => {
           return (
             <div className="bg-white rounded-3xl shadow-lg p-12 text-center">
               <p className="text-xl font-semibold text-gray-400">
-                {searchTerm || filterCategory
+                {searchTerm || filterCategory || filterLowStock
                   ? `No results found`
                   : "No products found"}
               </p>
@@ -858,7 +961,7 @@ const List = ({ token }) => {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
               <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onClick={() => { setCurrentPage((p) => Math.max(1, p - 1)); scrollTop(); }}
                 disabled={safePage === 1}
                 className="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-blue-400 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
               >
@@ -878,7 +981,7 @@ const List = ({ token }) => {
                   ) : (
                     <button
                       key={pg}
-                      onClick={() => setCurrentPage(pg)}
+                      onClick={() => { setCurrentPage(pg); scrollTop(); }}
                       className={`w-9 h-9 flex items-center justify-center rounded-lg border text-sm font-bold transition-all shadow-sm ${
                         pg === safePage
                           ? "bg-slate-900 text-white border-slate-900"
@@ -891,7 +994,7 @@ const List = ({ token }) => {
                 )}
 
               <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => { setCurrentPage((p) => Math.min(totalPages, p + 1)); scrollTop(); }}
                 disabled={safePage === totalPages}
                 className="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-blue-400 hover:text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
               >
