@@ -119,8 +119,8 @@ const Add = ({ token }) => {
   /* ================= VALIDATION ================= */
 
   const validateForm = () => {
-    if (!name || !description || category.length === 0 || subCategory.length === 0) {
-      toast.error("All basic fields are required (including at least one category and subcategory)");
+    if (!name || !description) {
+      toast.error("Name and description are required");
       return false;
     }
 
