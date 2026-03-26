@@ -797,7 +797,7 @@ const Order = ({ token }) => {
                       {selectedOrder.items?.map((item, i) => (
                         <tr key={i} className="text-[11px] border-b border-gray-100 last:border-0">
                           <td className="p-1.5 px-3 whitespace-nowrap overflow-hidden max-w-[120px] text-ellipsis">{item.code || "N/A"}</td>
-                          <td className="p-1.5 px-3 font-semibold">{item.size || "-"}</td>
+                          <td className="p-1.5 px-3 font-semibold">{Array.isArray(item.size) ? item.size.join(', ') : (item.size || "-")}</td>
                           <td className="p-1.5 px-3 text-center">{item.quantity}</td>
                           <td className="p-1.5 px-3">{item.color || "-"}</td>
                           <td className="p-1.5 px-3 break-all font-semibold max-w-[150px]">{selectedOrder.orderNumber || selectedOrder._id}_{i + 1}</td>
