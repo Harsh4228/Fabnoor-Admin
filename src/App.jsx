@@ -15,6 +15,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import Category from "./pages/Category";
 import HeroImages from "./pages/HeroImages";
 import Dashboard from "./pages/Dashboard";
+import Reports from "./pages/Reports";
 
 const App = () => {
   const [token, setToken] = useState(
@@ -63,6 +64,10 @@ const App = () => {
                   <Route
                     path="/hero"
                     element={<HeroImages token={token} />}
+                  />
+                  <Route
+                    path="/reports"
+                    element={<Reports token={token} />}
                   />
                   <Route path="*" element={<Dashboard token={token} />} />
                 </Routes>
