@@ -28,6 +28,7 @@ const Order = ({ token }) => {
   const [statusUpdating, setStatusUpdating] = useState(null);
   const [paymentUpdating, setPaymentUpdating] = useState(null);
   const [showRaw, setShowRaw] = useState(false);
+  const [cancelModal, setCancelModal] = useState({ show: false, orderId: null });
   const [searchTerm, setSearchTerm] = useState("");
   const [adminProfile, setAdminProfile] = useState(null); // ✅ hold admin profile for return address
 
@@ -421,7 +422,11 @@ const Order = ({ token }) => {
                           key={a.status}
                           onClick={(e) => {
                             e.stopPropagation();
-                            updateStatus(order._id, a.status);
+                            if (a.label === 'Cancel') {
+                              setCancelModal({ show: true, orderId: order._id });
+                            } else {
+                              updateStatus(order._id, a.status);
+                            }
                           }}
                           disabled={statusUpdating === order._id}
                           className={`bg-slate-900 text-white py-2 px-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md hover:bg-slate-800 active:scale-95 transition-all ${statusUpdating === order._id ? 'opacity-50 cursor-wait' : ''} ${a.label === 'Cancel' ? 'bg-red-600 hover:bg-red-700' : ''}`}
@@ -694,6 +699,36 @@ const Order = ({ token }) => {
           </div>
         )
       }
+
+      {/* ================= CANCEL CONFIRMATION MODAL ================= */}
+      {cancelModal.show && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60] overflow-hidden">
+          <div className="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-sm text-center">
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Are you sure?</h3>
+            <p className="text-sm font-medium text-slate-500 mt-2">Do you really want to cancel this order? This action cannot be undone.</p>
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => setCancelModal({ show: false, orderId: null })}
+                className="flex-1 bg-slate-100 text-slate-700 py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-200 transition-colors"
+              >
+                No, Keep
+              </button>
+              <button
+                onClick={() => {
+                  updateStatus(cancelModal.orderId, "Cancelled");
+                  setCancelModal({ show: false, orderId: null });
+                }}
+                className="flex-1 bg-red-600 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-red-700 shadow-lg shadow-red-200 transition-all active:scale-95"
+              >
+                Yes, Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ================= HIDDEN SHIPPING SLIP (WAYBILL) FOR PDF ================= */}
       {
         selectedOrder && (
