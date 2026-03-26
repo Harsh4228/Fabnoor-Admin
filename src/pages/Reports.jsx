@@ -466,18 +466,34 @@ const Reports = ({ token }) => {
     return sortDir === "asc" ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
   });
 
-  const Th = ({ label, k, cls = "" }) => (
-    <th onClick={() => handleSort(k)}
-      className={`px-3 py-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer select-none whitespace-nowrap hover:text-slate-700 transition-colors ${cls}`}
-    >
-      <span className="flex items-center gap-1">
-        {label}
-        <span className={`transition-colors ${sortKey === k ? "text-blue-500" : "text-slate-300"}`}>
-          {sortKey === k ? (sortDir === "asc" ? "â†‘" : "â†“") : "â†•"}
+  const Th = ({ label, k, cls = "" }) => {
+    const active = sortKey === k;
+    const asc    = active && sortDir === "asc";
+    const desc   = active && sortDir === "desc";
+    return (
+      <th onClick={() => handleSort(k)}
+        className={`px-3 py-3 text-left text-[10px] font-black uppercase tracking-widest cursor-pointer select-none whitespace-nowrap transition-colors ${
+          active ? "text-blue-600" : "text-slate-400 hover:text-slate-700"
+        } ${cls}`}
+      >
+        <span className="flex items-center gap-1.5">
+          {label}
+          <span className="flex flex-col items-center justify-center gap-[1px] w-2.5 flex-shrink-0">
+            {/* Up arrow */}
+            <svg className={`w-2.5 h-2 transition-colors ${asc ? "text-blue-500" : "text-slate-300"}`}
+              viewBox="0 0 10 6" fill="currentColor">
+              <path d="M5 0L10 6H0L5 0Z" />
+            </svg>
+            {/* Down arrow */}
+            <svg className={`w-2.5 h-2 transition-colors ${desc ? "text-blue-500" : "text-slate-300"}`}
+              viewBox="0 0 10 6" fill="currentColor">
+              <path d="M5 6L0 0H10L5 6Z" />
+            </svg>
+          </span>
         </span>
-      </span>
-    </th>
-  );
+      </th>
+    );
+  };
 
   const clearFilters = () => {
     setFromDate(monthAgo()); setToDate(today());
