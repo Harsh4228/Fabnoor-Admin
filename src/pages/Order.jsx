@@ -161,12 +161,11 @@ const Order = ({ token }) => {
       element.style.display = "block";
 
       const opt = {
-        margin: 0.2, // smaller margins for waybill
-        filename: `shipping-slip-${(orders.find(o => o._id === orderId)?.orderNumber) || orderId}.pdf`,
+        margin: 0,
+        filename: `invoice-${(orders.find(o => o._id === orderId)?.orderNumber) || orderId}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        // Use A4 portrait to ensure the entire tabular invoice fits gracefully on a single page
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: [148, 210], orientation: 'portrait' }
       };
 
       await html2pdf().set(opt).from(element).save();
@@ -729,247 +728,134 @@ const Order = ({ token }) => {
           </div>
         </div>
       )}
-      {/* ================= HIDDEN SHIPPING SLIP (WAYBILL) FOR PDF ================= */}
+      {/* ================= HIDDEN INVOICE (BILL) FOR PDF ================= */}
       {
         selectedOrder && (
           <div style={{ display: "none" }}>
-            <div id="shipping-slip-content" className="bg-white m-0 w-[750px] text-black font-sans box-border" style={{ letterSpacing: "0.2px" }}>
+            <div id="shipping-slip-content" style={{ width: "520px", margin: "0 auto", background: "white", fontFamily: "Arial, sans-serif", color: "#000", boxSizing: "border-box", padding: "18px 20px", border: "2px solid #000" }}>
 
-              <div className="border-[3px] border-black flex flex-col">
-
-                {/* ROW 1: ADDRESS & ROUTING */}
-                <div className="flex border-b-[3px] border-black">
-
-                  {/* LEFT: ADDRESSES */}
-                  <div className="w-[45%] flex flex-col border-r-[3px] border-black">
-                    {/* Customer Address */}
-                    <div className="p-2 pb-6 border-b border-black flex-1">
-                      <p className="text-[12px] font-bold mb-1">Customer Address</p>
-                      <p className="text-[14px] font-extrabold capitalize leading-snug">{selectedOrder?.address?.fullName || "Customer"}</p>
-                      <p className="text-[12px] leading-snug capitalize mt-1">
-                        {selectedOrder?.address?.addressLine}
-                      </p>
-                      <p className="text-[12px] leading-snug capitalize mt-1">
-                        {selectedOrder?.address?.city}, {selectedOrder?.address?.state}, {selectedOrder?.address?.pincode}
-                      </p>
-                      <p className="text-[12px] font-bold mt-2">Ph: {selectedOrder?.address?.phone}</p>
-                    </div>
-
-                    {/* Return Address */}
-                    <div className="p-2 flex-1 pb-4">
-                      <p className="text-[11px] font-bold mb-1">If undelivered, return to:</p>
-                      <p className="text-[12px] uppercase tracking-wide">{adminProfile?.shopName || "FABNOOR"}</p>
-                      <p className="text-[11px] leading-tight capitalize mt-1">
-                        {adminProfile?.address?.street || ""}
-                      </p>
-                      <p className="text-[11px] leading-tight capitalize mt-1">
-                        {adminProfile?.address?.city || ""}{adminProfile?.address?.city ? ", " : ""}{adminProfile?.address?.state || ""}{adminProfile?.address?.state ? ", " : ""}{adminProfile?.address?.zipcode || ""}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* RIGHT: ROUTING & BARCODE */}
-                  <div className="w-[55%] flex flex-col">
-                    {/* Payment Header */}
-                    <div className="bg-black text-white px-3 py-1.5 text-[12px] font-bold text-left">
-                      {selectedOrder.paymentMethod === 'COD'
-                        ? 'COD: Check the payable amount on the app'
-                        : 'PREPAID'}
-                    </div>
-
-                    {/* Courier Name & Icons */}
-                    <div className="flex justify-between items-start p-3 py-2">
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xl font-bold">ValmoPlus</span>
-                        <span className="bg-black text-white text-[10px] px-1 font-bold mt-1">Pickup</span>
-                      </div>
-                      <div className="bg-black text-white w-7 h-7 flex items-center justify-center font-bold text-lg mt-1">C</div>
-                    </div>
-
-                    <div className="flex justify-end p-2 px-3 pb-0 opacity-80 mix-blend-multiply filter contrast-150">
-                      <img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&margin=0&data=${selectedOrder._id}`} alt="QR" className="w-16 h-16 object-contain" />
-                    </div>
-
-                    {/* Routing Codes */}
-                    <div className="px-3 pb-2 text-lg font-extrabold leading-tight tracking-wider mt-[-60px]">
-                      <p>KMH-R0</p>
-                      <p className="mt-4">PCSA</p>
-                      <p className="mt-1">W1/SHS</p>
-                      <p className="mt-1">N2/AG2S</p>
-                      <p className="mt-1">UP3/FQV</p>
-                    </div>
-
-                    {/* Barcode Area */}
-                    <div className="mt-auto pt-2">
-                      <div className="bg-black text-white text-center py-1.5 text-[15px] font-bold tracking-widest">
-                        VL0082519283988
-                      </div>
-                      <div className="h-[70px] flex items-center justify-center overflow-hidden px-4 mt-1 opacity-90 py-1" style={{ gap: '2px' }}>
-                        {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 3, 1, 2, 4, 1, 3, 2, 1].map((w, idx) => (
-                          <div key={idx} className="bg-black h-full" style={{ width: `${w}px`, flexShrink: 0 }}></div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+              {/* ── HEADER ── */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "2px solid #000", paddingBottom: "8px", marginBottom: "8px" }}>
+                <div style={{ width: "80px" }} />
+                <div style={{ textAlign: "center" }}>
+                  <img src={assets.logo} alt="FabNoor" style={{ height: "44px", objectFit: "contain", display: "block", margin: "0 auto" }} />
+                  <div style={{ fontSize: "9px", color: "#555", marginTop: "3px" }}>fabnoor.com &nbsp;|&nbsp; The Princess Look</div>
                 </div>
+                <div style={{ width: "80px" }} />
+              </div>
 
-                {/* ROW 2: PRODUCT DETAILS */}
-                <div className="border-b-[3px] border-black p-0">
-                  <table className="w-full text-left border-collapse bg-white">
-                    <thead>
-                      <tr>
-                        <th colSpan="5" className="p-1.5 px-3 text-[12px] font-bold">Product Details</th>
-                      </tr>
-                      <tr className="text-[12px] font-bold border-b border-black">
-                        <th className="p-1 px-3 pb-2">SKU</th>
-                        <th className="p-1 px-3 pb-2">Size</th>
-                        <th className="p-1 px-3 pb-2 text-center">Qty</th>
-                        <th className="p-1 px-3 pb-2">Color</th>
-                        <th className="p-1 px-3 pb-2">Order No.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedOrder.items?.map((item, i) => (
-                        <tr key={i} className="text-[11px] border-b border-gray-100 last:border-0">
-                          <td className="p-1.5 px-3 whitespace-nowrap overflow-hidden max-w-[120px] text-ellipsis">{item.code || "N/A"}</td>
-                          <td className="p-1.5 px-3 font-semibold">{Array.isArray(item.size) ? item.size.join(', ') : (item.size || "-")}</td>
-                          <td className="p-1.5 px-3 text-center">{item.quantity}</td>
-                          <td className="p-1.5 px-3">{item.color || "-"}</td>
-                          <td className="p-1.5 px-3 break-all font-semibold max-w-[150px]">{selectedOrder.orderNumber || selectedOrder._id}_{i + 1}</td>
+              {/* ── SHIP TO / RETURN TO ── */}
+              <div style={{ display: "flex", gap: "0", borderBottom: "1.5px solid #000", marginBottom: "0" }}>
+                <div style={{ flex: "1", padding: "6px 8px", borderRight: "1.5px solid #000", fontSize: "10px", lineHeight: "1.6" }}>
+                  <div style={{ fontWeight: "800", fontSize: "9px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "3px" }}>Ship To (Customer Address):</div>
+                  <div style={{ fontWeight: "700", fontSize: "11px", textTransform: "capitalize" }}>{selectedOrder?.address?.fullName || "Customer"}</div>
+                  <div style={{ textTransform: "capitalize" }}>{selectedOrder?.address?.addressLine}</div>
+                  <div style={{ textTransform: "capitalize" }}>{selectedOrder?.address?.city}, {selectedOrder?.address?.state} – {selectedOrder?.address?.pincode}</div>
+                  <div style={{ fontWeight: "700" }}>Ph: {selectedOrder?.address?.phone}</div>
+                </div>
+                <div style={{ flex: "1", padding: "6px 8px", fontSize: "10px", lineHeight: "1.6" }}>
+                  <div style={{ fontWeight: "800", fontSize: "9px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "3px" }}>If Undelivered, Return To:</div>
+                  <div style={{ fontWeight: "700", fontSize: "11px" }}>{adminProfile?.shopName || "FabNoor"}</div>
+                  {adminProfile?.address?.street && <div>{adminProfile.address.street}</div>}
+                  <div>{[adminProfile?.address?.city, adminProfile?.address?.state, adminProfile?.address?.zipcode].filter(Boolean).join(", ")}</div>
+                  <div style={{ color: "#888" }}>fabnoor.com</div>
+                </div>
+              </div>
+
+              {/* ── ORDER META ── */}
+              <div style={{ display: "flex", borderBottom: "1.5px solid #000", fontSize: "9.5px" }}>
+                <div style={{ flex: "1", padding: "4px 8px", borderRight: "1px solid #000" }}>
+                  <span style={{ fontWeight: "700" }}>Order ID:</span> {selectedOrder.orderNumber || selectedOrder._id}
+                </div>
+                <div style={{ flex: "0 0 auto", padding: "4px 8px", borderRight: "1px solid #000" }}>
+                  <span style={{ fontWeight: "700" }}>Date:</span> {getOrderDate(selectedOrder).split(",")[0]}
+                </div>
+                <div style={{ flex: "0 0 auto", padding: "4px 8px" }}>
+                  <span style={{ fontWeight: "700" }}>Payment:</span>{" "}
+                  <span style={{ fontWeight: "800", color: selectedOrder.payment ? "#16a34a" : "#dc2626" }}>
+                    {selectedOrder.payment ? "PAID" : "COD"}
+                  </span>
+                </div>
+              </div>
+
+              {/* ── PRODUCT TABLE ── */}
+              {(() => {
+                const items = selectedOrder.items || [];
+                const totalSets = items.reduce((s, item) => s + Number(item.quantity), 0);
+                const totalPcsAll = items.reduce((s, item) => {
+                  const sizeArr = Array.isArray(item.size) ? item.size.filter(Boolean) : [item.size].filter(Boolean);
+                  const pcsPerSet = sizeArr.length > 1 ? sizeArr.length : 1;
+                  return s + Number(item.quantity) * pcsPerSet;
+                }, 0);
+                const grandTotal = selectedOrder.amount || items.reduce((s, item) => s + Number(item.price) * Number(item.quantity), 0);
+                const multiRow = true; // always show totals footer
+                return (
+                  <div style={{ borderBottom: "1.5px solid #000" }}>
+                    <div style={{ background: "#eee", padding: "4px 8px", fontSize: "9px", fontWeight: "900", textTransform: "uppercase", letterSpacing: "1.5px", textAlign: "center", borderBottom: "1px solid #000" }}>
+                      Product Details
+                    </div>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px" }}>
+                      <thead>
+                        <tr style={{ background: "#f7f7f7", borderBottom: "1px solid #000" }}>
+                          <th style={{ padding: "4px 5px", textAlign: "center", borderRight: "1px solid #ccc", width: "5%" }}>No.</th>
+                          <th style={{ padding: "4px 6px", textAlign: "left", borderRight: "1px solid #ccc", width: "20%" }}>SKU</th>
+                          <th style={{ padding: "4px 6px", textAlign: "left", borderRight: "1px solid #ccc", width: "14%" }}>Color</th>
+                          <th style={{ padding: "4px 6px", textAlign: "left", borderRight: "1px solid #ccc", width: "18%" }}>Size</th>
+                          <th style={{ padding: "4px 5px", textAlign: "center", borderRight: "1px solid #ccc", width: "9%" }}>Qty<br />(Set)</th>
+                          <th style={{ padding: "4px 6px", textAlign: "right", borderRight: "1px solid #ccc", width: "12%" }}>Rate/Pc<br />(₹)</th>
+                          <th style={{ padding: "4px 5px", textAlign: "center", borderRight: "1px solid #ccc", width: "9%" }}>Qty<br />(Pcs)</th>
+                          <th style={{ padding: "4px 6px", textAlign: "right", width: "13%" }}>Total<br />(₹)</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* ROW 3: TAX INVOICE SECTION */}
-                <div className="border-b-[3px] border-black">
-                  <div className="bg-gray-100 flex justify-between items-center p-1 border-b border-black">
-                    <span className="text-[11px] font-bold mx-auto w-[65%] text-center tracking-widest uppercase ml-auto">TAX INVOICE</span>
-                    <span className="text-[9px] whitespace-nowrap px-2 font-medium">Original For Recipient</span>
-                  </div>
-
-                  {/* Bill to / Sold By Headers */}
-                  <div className="flex">
-                    {/* Bill To */}
-                    <div className="w-[45%] p-2 px-3 border-r border-black text-[10px] leading-tight">
-                      <p className="font-bold text-[11px] mb-2">BILL TO / SHIP TO</p>
-                      <p className="capitalize text-[11px] leading-relaxed">
-                        {selectedOrder?.address?.fullName} - , {selectedOrder?.address?.city}, {selectedOrder?.address?.state}, {selectedOrder?.address?.pincode},
-                      </p>
-                      <p className="mt-2 text-[10px]">Place of Supply: {selectedOrder?.address?.state}</p>
-                    </div>
-                    {/* Sold By */}
-                    <div className="w-[55%] p-2 px-3 text-[10px] leading-snug">
-                      <p><span className="font-bold">Sold by :</span> {adminProfile?.shopName || "FABNOOR"}</p>
-                      <p className="capitalize mb-2">
-                        {adminProfile?.address?.street}, , {adminProfile?.address?.city}, {adminProfile?.address?.state}, {adminProfile?.address?.zipcode}
-                      </p>
-                      <p className="font-bold text-[11px] mb-2 mt-1">GSTIN - 24AAJFO1329D1ZN</p>
-                      <div className="flex justify-between mt-1 w-full text-[9px]">
-                        <div className="pr-2">
-                          <p>Purchase Order No.</p>
-                          <p className="font-bold">{selectedOrder.orderNumber || selectedOrder._id}</p>
-                        </div>
-                        <div className="px-2 border-l border-gray-300">
-                          <p>Invoice No.</p>
-                          <p className="font-bold">zvkt{String(Date.now()).slice(-6)}</p>
-                        </div>
-                        <div className="px-2 border-l border-gray-300">
-                          <p>Order Date</p>
-                          <p className="font-bold">{getOrderDate(selectedOrder).split(',')[0].replace(/\//g, '.')}</p>
-                        </div>
-                        <div className="pl-2 border-l border-gray-300">
-                          <p>Invoice Date</p>
-                          <p className="font-bold">{new Date().toLocaleDateString().replace(/\//g, '.')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ROW 4: TAX TABLE - FIXED HEADER WIDTHS */}
-                <div className="border-b-[3px] border-black">
-                  <table className="w-full text-left border-collapse text-[10px]">
-                    <thead>
-                      <tr className="border-b border-black">
-                        <th className="p-1 px-1.5 font-bold w-[28%] max-w-[28%] break-words">Description</th>
-                        <th className="p-1 px-1 font-bold w-[7%] text-center">HSN</th>
-                        <th className="p-1 px-1 font-bold w-[5%] text-center">Qty</th>
-                        <th className="p-1 px-1 font-bold w-[12%] text-center">Gross Amount</th>
-                        <th className="p-1 px-1 font-bold w-[10%] text-center">Discount</th>
-                        <th className="p-1 px-1 font-bold w-[13%] text-center">Taxable Value</th>
-                        <th className="p-1 px-1 font-bold w-[14%] text-center">Taxes</th>
-                        <th className="p-1 px-2 font-bold w-[11%] text-right shrink-0">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedOrder.items?.map((item, i) => {
-                        const totalObjPrice = Number(item.price) * Number(item.quantity);
-                        const taxable = (totalObjPrice / 1.05).toFixed(2);
-                        const tax = (totalObjPrice - taxable).toFixed(2);
-
-                        return (
-                          <tr key={i} className="border-b border-gray-100 last:border-0 align-top">
-                            <td className="p-1.5 px-1.5 leading-tight w-[28%] max-w-[28%] break-words">
-                              <span className="block">{item.name} -</span>
-                              <span className="font-bold">{item.size}</span>
-                            </td>
-                            <td className="p-1.5 py-2 text-center">158374</td>
-                            <td className="p-1.5 py-2 text-center font-bold">{item.quantity}</td>
-                            <td className="p-1.5 py-2 text-center">Rs.{totalObjPrice.toFixed(2)}</td>
-                            <td className="p-1.5 py-2 text-center">Rs.0.00</td>
-                            <td className="p-1.5 py-2 text-center">Rs.{taxable}</td>
-                            <td className="p-1.5 py-2 text-center leading-tight">
-                              IGST @5.0%<br />Rs.{tax}
-                            </td>
-                            <td className="p-1.5 px-2 py-2 font-bold text-right">Rs.{totalObjPrice.toFixed(2)}</td>
-                          </tr>
-                        )
-                      })}
-                      {/* Shipping/Other Charges Row */}
-                      <tr className="align-top">
-                        <td className="p-1.5 px-1.5 leading-tight pt-3">Other Charges</td>
-                        <td className="p-1.5 py-3 text-center">158374</td>
-                        <td className="p-1.5 py-3 text-center">NA</td>
-                        {(() => {
-                          const itemsTotal = selectedOrder.items?.reduce((acc, item) => acc + (Number(item.price) * Number(item.quantity)), 0) || 0;
-                          const shippingCharge = selectedOrder.amount > itemsTotal ? selectedOrder.amount - itemsTotal : 0;
-                          const sTaxable = (shippingCharge / 1.05).toFixed(2);
-                          const sTax = (shippingCharge - sTaxable).toFixed(2);
+                      </thead>
+                      <tbody>
+                        {items.map((item, i) => {
+                          const sizeArr = Array.isArray(item.size) ? item.size.filter(Boolean) : [item.size].filter(Boolean);
+                          const sizeDisplay = sizeArr.length > 1 ? `${sizeArr[0]} to ${sizeArr[sizeArr.length - 1]}` : sizeArr[0] || "–";
+                          const pcsPerSet = sizeArr.length > 1 ? sizeArr.length : 1;
+                          const totalPcs = Number(item.quantity) * pcsPerSet;
+                          // Rate per piece = set price ÷ pieces per set
+                          const ratePerPc = pcsPerSet > 1 ? Number(item.price) / pcsPerSet : Number(item.price);
+                          const lineTotal = Number(item.price) * Number(item.quantity);
                           return (
-                            <>
-                              <td className="p-1.5 py-3 text-center">Rs.{shippingCharge.toFixed(2)}</td>
-                              <td className="p-1.5 py-3 text-center">Rs.0</td>
-                              <td className="p-1.5 py-3 text-center">Rs.{sTaxable}</td>
-                              <td className="p-1.5 py-3 text-center leading-tight">
-                                IGST @5.0%<br />Rs.{sTax}
-                              </td>
-                              <td className="p-1.5 px-2 py-3 font-bold text-right">Rs.{shippingCharge.toFixed(2)}</td>
-                            </>
-                          )
-                        })()}
-                      </tr>
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t border-black font-extrabold text-[11px]">
-                        <td colSpan="6" className="p-2 py-2.5">Total</td>
-                        <td className="p-2 py-2.5 text-center text-[10px]">
-                          {(() => {
-                            const totalTax = selectedOrder.amount - (selectedOrder.amount / 1.05);
-                            return <span className="font-bold">Rs.{totalTax.toFixed(2)}</span>;
-                          })()}
-                        </td>
-                        <td className="p-2 py-2.5 text-right">Rs.{selectedOrder.amount.toFixed(2)}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                            <tr key={i} style={{ borderBottom: "1px solid #ddd" }}>
+                              <td style={{ padding: "4px 5px", textAlign: "center", borderRight: "1px solid #ddd", fontWeight: "700" }}>{i + 1}</td>
+                              <td style={{ padding: "4px 6px", borderRight: "1px solid #ddd", fontFamily: "Courier New, monospace", fontWeight: "700", fontSize: "9.5px" }}>{item.code || "N/A"}</td>
+                              <td style={{ padding: "4px 6px", borderRight: "1px solid #ddd", textTransform: "capitalize" }}>{item.color || "–"}</td>
+                              <td style={{ padding: "4px 6px", borderRight: "1px solid #ddd", fontWeight: "600" }}>{sizeDisplay}</td>
+                              <td style={{ padding: "4px 5px", textAlign: "center", borderRight: "1px solid #ddd", fontWeight: "700" }}>{item.quantity}</td>
+                              <td style={{ padding: "4px 6px", textAlign: "right", borderRight: "1px solid #ddd" }}>₹{ratePerPc.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</td>
+                              <td style={{ padding: "4px 5px", textAlign: "center", borderRight: "1px solid #ddd" }}>{totalPcs}</td>
+                              <td style={{ padding: "4px 6px", textAlign: "right", fontWeight: "700" }}>₹{lineTotal.toLocaleString("en-IN")}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      {/* ── TOTALS ROW (only when >1 product) ── */}
+                      {multiRow && (
+                        <tfoot>
+                          <tr style={{ borderTop: "1.5px solid #000", background: "#f0f0f0", fontWeight: "800", fontSize: "10px" }}>
+                            <td colSpan="4" style={{ padding: "4px 6px", borderRight: "1px solid #ccc", textAlign: "right", letterSpacing: "0.5px" }}>TOTAL</td>
+                            <td style={{ padding: "4px 5px", textAlign: "center", borderRight: "1px solid #ccc" }}>{totalSets}</td>
+                            <td style={{ borderRight: "1px solid #ccc" }}></td>
+                            <td style={{ padding: "4px 5px", textAlign: "center", borderRight: "1px solid #ccc" }}>{totalPcsAll}</td>
+                            <td style={{ padding: "4px 6px", textAlign: "right", color: "#e91e63" }}>₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
+                  </div>
+                );
+              })()}
 
-                {/* ROW 5: FOOTER */}
-                <div className="p-1.5 px-2 pb-2 pt-1.5 text-[8.5px] leading-[1.3] text-gray-700 font-medium w-[100%] text-justify">
-                  Tax is not payable on reverse charge basis. This is a computer generated invoice and does not require signature. Other charges are charges that are applicable to your order and include charges for logistics fee (where applicable). Includes discounts for your city and/or for online payments (as applicable)
-                </div>
+              {/* ── NOTE ── */}
+              <div style={{ padding: "7px 10px", fontSize: "9px", lineHeight: "1.7", color: "#444", borderBottom: "1.5px solid #000" }}>
+                <div>• Returns accepted as per Terms &amp; Conditions.</div>
+                <div>• For queries: fabnoor.com</div>
+              </div>
+
+              {/* ── FOOTER STRIP ── */}
+              <div style={{ borderTop: "2px solid #e91e63", marginTop: "8px", paddingTop: "6px", textAlign: "center", fontSize: "9px", color: "#aaa" }}>
+                <strong style={{ color: "#e91e63" }}>FabNoor</strong>&nbsp;•&nbsp;fabnoor.com&nbsp;•&nbsp;The Princess Look
               </div>
 
             </div>

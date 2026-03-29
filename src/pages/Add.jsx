@@ -103,6 +103,8 @@ const Add = ({ token }) => {
         return;
       }
       sizes.push(size);
+      // keep sizes in the defined SIZES order regardless of selection sequence
+      sizes.sort((a, b) => SIZES.indexOf(a) - SIZES.indexOf(b));
       if (sizes.length === SIZES.length) {
         variant.allowedSizeCount = "All";
       }
