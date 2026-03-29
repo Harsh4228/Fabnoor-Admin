@@ -211,7 +211,7 @@ const Add = ({ token }) => {
             color: v.color,
             code: v.code,
             fabric: v.fabric,
-            sizes: v.sizes, // ["S","M"]
+            sizes: [...v.sizes].sort((a, b) => SIZES.indexOf(a) - SIZES.indexOf(b)),
             price: Number(v.price),
             stock: Number(v.stock || 0),
           })),

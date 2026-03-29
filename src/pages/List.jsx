@@ -440,7 +440,9 @@ const List = ({ token }) => {
           toast.warning(`You can only select up to ${allowed} size(s).`);
           return p;
         }
-        variant.sizes = [...currentSizes, size];
+        variant.sizes = [...currentSizes, size].sort(
+          (a, b) => SIZES.indexOf(a) - SIZES.indexOf(b)
+        );
         if (variant.sizes.length === SIZES.length) {
           variant.allowedSizeCount = "All";
         }
@@ -553,7 +555,7 @@ const List = ({ token }) => {
         color: v.color,
         code: v.code,
         fabric: v.fabric || v.type || "",
-        sizes: v.sizes,
+        sizes: [...(v.sizes || [])].sort((a, b) => SIZES.indexOf(a) - SIZES.indexOf(b)),
         price: Number(v.price),
         stock: Number(v.stock || 0),
         existingImages: v.images,
@@ -1928,10 +1930,9 @@ const List = ({ token }) => {
                                         ...(variant.sizes || []),
                                       ];
                                       if (current.length > Number(val)) {
-                                        variant.sizes = current.slice(
-                                          0,
-                                          Number(val),
-                                        );
+                                        variant.sizes = current
+                                          .slice(0, Number(val))
+                                          .sort((a, b) => SIZES.indexOf(a) - SIZES.indexOf(b));
                                       }
                                     } else {
                                       variant.sizes = [];
