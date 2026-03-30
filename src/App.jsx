@@ -14,6 +14,7 @@ import GlobalDiscount from "./pages/GlobalDiscount";
 import ScrollToTop from "./components/ScrollToTop";
 import Category from "./pages/Category";
 import HeroImages from "./pages/HeroImages";
+import PageImages from "./pages/PageImages";
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
 
@@ -64,6 +65,10 @@ const App = () => {
                   <Route
                     path="/hero"
                     element={<HeroImages token={token} />}
+                  />
+                  <Route
+                    path="/page-images"
+                    element={<PageImages token={token} />}
                   />
                   <Route
                     path="/reports"
