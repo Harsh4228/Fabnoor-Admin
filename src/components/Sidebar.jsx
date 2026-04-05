@@ -18,9 +18,10 @@ const ICONS = {
   category: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z",
   hero:     "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
   pageimg:  "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-  discount: "M7 7h.01M17 17h.01M7 17L17 7M6 6m0 0a1 1 0 100 2 1 1 0 000-2zm11 11a1 1 0 100 2 1 1 0 000-2z",
-  users:    "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
-  report:   "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  discount:    "M7 7h.01M17 17h.01M7 17L17 7M6 6m0 0a1 1 0 100 2 1 1 0 000-2zm11 11a1 1 0 100 2 1 1 0 000-2z",
+  users:       "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
+  report:      "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  signupreq:   "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z",
 };
 
 const NAV = [
@@ -36,9 +37,10 @@ const NAV = [
   { to: "/page-images", icon: ICONS.pageimg,  label: "Page Images" },
   { to: "/reels",       icon: ICONS.reels,    label: "Reels" },
   { section: "Settings" },
-  { to: "/discount", icon: ICONS.discount, label: "Global Discount" },
-  { to: "/users",    icon: ICONS.users,    label: "Users" },
-  { to: "/reports",  icon: ICONS.report,   label: "Reports" },
+  { to: "/discount",        icon: ICONS.discount,   label: "Global Discount" },
+  { to: "/users",           icon: ICONS.users,      label: "Users" },
+  { to: "/signup-requests", icon: ICONS.signupreq,  label: "Signup Requests" },
+  { to: "/reports",         icon: ICONS.report,     label: "Reports" },
 ];
 
 /* ── Shared nav-link renderer ─────────────────────────────── */

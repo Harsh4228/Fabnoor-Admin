@@ -18,6 +18,7 @@ import HeroImages from "./pages/HeroImages";
 import PageImages from "./pages/PageImages";
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
+import SignupRequests from "./pages/SignupRequests";
 
 const App = () => {
   const [token, setToken] = useState(
@@ -54,6 +55,7 @@ const App = () => {
                   <Route path="/list" element={<List token={token} />} />
                   <Route path="/orders" element={<Orders token={token} />} />
                   <Route path="/users" element={<Users token={token} />} />
+                  <Route path="/signup-requests" element={<SignupRequests token={token} />} />
                   <Route path="/reels" element={<ReelsAdmin token={token} />} />
                   <Route
                     path="/discount"
