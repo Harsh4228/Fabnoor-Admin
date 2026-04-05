@@ -99,6 +99,8 @@ const VariantQuickEdit = ({
   currency,
   onSave,
   isLoading,
+  onToggleHidden,
+  isToggling,
 }) => {
   const [price, setPrice] = useState(variant.price);
   const [stock, setStock] = useState(variant.stock);
@@ -115,33 +117,71 @@ const VariantQuickEdit = ({
 
   const isLow = Number(stock) > 0 && Number(stock) < 6;
   const isOut = Number(stock) === 0;
+  const isHidden = !!variant.hidden;
 
   return (
     <div
       onClick={(e) => e.stopPropagation()}
       className={`flex flex-col gap-2 p-2.5 rounded-xl border transition-all ${
-        isOut
+        isHidden
+          ? "bg-gray-100/80 border-gray-300 opacity-60"
+          : isOut
           ? "bg-red-50/50 border-red-100"
           : isLow
-            ? "bg-amber-50/50 border-amber-100"
-            : "bg-slate-50/50 border-slate-200"
+          ? "bg-amber-50/50 border-amber-100"
+          : "bg-slate-50/50 border-slate-200"
       }`}
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <span
-            className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${isOut ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-slate-400"}`}
+            className={`w-1.5 h-1.5 flex-shrink-0 rounded-full ${isHidden ? "bg-gray-400" : isOut ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-slate-400"}`}
           ></span>
           <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight truncate">
             {variant.color}
           </span>
+          {isHidden && (
+            <span className="text-[8px] font-bold text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300">
+              HIDDEN
+            </span>
+          )}
+          {!isHidden && (
           <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 ml-auto">
             {currency}{formatNumber(variant.price)}
           </span>
+          )}
         </div>
-        <span className="text-[8px] font-bold text-slate-400 font-mono hidden sm:inline">
-          {variant.code}
-        </span>
+        <div className="flex items-center gap-1">
+          <span className="text-[8px] font-bold text-slate-400 font-mono hidden sm:inline">
+            {variant.code}
+          </span>
+          {/* Hide / Show toggle */}
+          <button
+            onClick={() => onToggleHidden(productId, variant.code)}
+            disabled={isToggling}
+            title={isHidden ? "Show on website" : "Hide from website"}
+            className={`ml-1 w-6 h-6 flex items-center justify-center rounded-md border transition-all ${
+              isHidden
+                ? "bg-emerald-50 border-emerald-300 text-emerald-600 hover:bg-emerald-100"
+                : "bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-200"
+            } ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
+          >
+            {isToggling ? (
+              <div className="w-2.5 h-2.5 border border-current border-t-transparent rounded-full animate-spin" />
+            ) : isHidden ? (
+              // Eye icon (show)
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            ) : (
+              // Eye-off icon (hide)
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -313,7 +353,6 @@ const List = ({ token }) => {
 
       if (res.data.success) {
         toast.success("Variant updated");
-        // Update local state without fetching all products
         setProducts((prev) =>
           prev.map((p) => {
             if (p._id === productId) {
@@ -332,6 +371,42 @@ const List = ({ token }) => {
       toast.error(err.message);
     } finally {
       setQuickUpdateLoading(null);
+    }
+  };
+
+  /* ================= TOGGLE VARIANT HIDDEN ================= */
+  const [toggleHiddenLoading, setToggleHiddenLoading] = useState(null); // variantCode
+
+  const handleToggleHidden = async (productId, variantCode) => {
+    setToggleHiddenLoading(variantCode);
+    try {
+      const res = await axios.post(
+        `${backendUrl}/api/product/toggle-variant-hidden`,
+        { id: productId, variantCode },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (res.data.success) {
+        toast.success(res.data.message);
+        setProducts((prev) =>
+          prev.map((p) => {
+            if (p._id === productId) {
+              return {
+                ...p,
+                variants: p.variants.map((v) =>
+                  v.code === variantCode ? { ...v, hidden: res.data.hidden } : v,
+                ),
+              };
+            }
+            return p;
+          }),
+        );
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setToggleHiddenLoading(null);
     }
   };
 
@@ -850,6 +925,8 @@ const List = ({ token }) => {
                           currency={currency}
                           onSave={handleQuickUpdate}
                           isLoading={quickUpdateLoading === v.code}
+                          onToggleHidden={handleToggleHidden}
+                          isToggling={toggleHiddenLoading === v.code}
                         />
                       ))}
                     </div>
