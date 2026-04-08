@@ -739,7 +739,7 @@ const Order = ({ token }) => {
                 <div style={{ width: "80px" }} />
                 <div style={{ textAlign: "center" }}>
                   <img src={assets.logo} alt="FabNoor" style={{ height: "44px", objectFit: "contain", display: "block", margin: "0 auto" }} />
-                  <div style={{ fontSize: "9px", color: "#555", marginTop: "3px" }}>fabnoor.com &nbsp;|&nbsp; The Princess Look</div>
+                  
                 </div>
                 <div style={{ width: "80px" }} />
               </div>
