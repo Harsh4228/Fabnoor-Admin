@@ -101,6 +101,7 @@ const VariantQuickEdit = ({
   isLoading,
   onToggleHidden,
   isToggling,
+  lowStockThreshold,
 }) => {
   const [price, setPrice] = useState(variant.price);
   const [stock, setStock] = useState(variant.stock);
@@ -115,7 +116,7 @@ const VariantQuickEdit = ({
     Number(price) !== Number(variant.price) ||
     Number(stock) !== Number(variant.stock);
 
-  const isLow = Number(stock) > 0 && Number(stock) < 6;
+  const isLow = Number(stock) > 0 && Number(stock) < (lowStockThreshold ?? 5);
   const isOut = Number(stock) === 0;
   const isHidden = !!variant.hidden;
 
@@ -296,6 +297,7 @@ const List = ({ token }) => {
   const [filterCategory, setFilterCategory] = useState("");
   const [filterSubCategory, setFilterSubCategory] = useState("");
   const [filterLowStock, setFilterLowStock] = useState(""); // "" | "low" | "out"
+  const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 12;
 
@@ -316,6 +318,13 @@ const List = ({ token }) => {
       .get(`${backendUrl}/api/category/list`)
       .then((res) => {
         if (res.data.success) setCategoriesData(res.data.categories || []);
+      })
+      .catch(() => {});
+    // Fetch low stock threshold from settings
+    axios
+      .get(`${backendUrl}/api/discount/get`)
+      .then((res) => {
+        if (res.data.success) setLowStockThreshold(res.data.globalDiscount.lowStockThreshold ?? 5);
       })
       .catch(() => {});
   }, []);
@@ -842,7 +851,7 @@ const List = ({ token }) => {
           );
           const matchesStock = !filterLowStock || (() => {
             if (filterLowStock === "out") return p.variants?.some((v) => Number(v.stock) === 0);
-            if (filterLowStock === "low") return p.variants?.some((v) => Number(v.stock) > 0 && Number(v.stock) < 6);
+            if (filterLowStock === "low") return p.variants?.some((v) => Number(v.stock) > 0 && Number(v.stock) < lowStockThreshold);
             return true;
           })();
           return (matchesName || matchesVariants) && matchesCategory && matchesSubCategory && matchesStock;
@@ -927,6 +936,7 @@ const List = ({ token }) => {
                           isLoading={quickUpdateLoading === v.code}
                           onToggleHidden={handleToggleHidden}
                           isToggling={toggleHiddenLoading === v.code}
+                          lowStockThreshold={lowStockThreshold}
                         />
                       ))}
                     </div>
@@ -1150,13 +1160,13 @@ const List = ({ token }) => {
                     const stockStatus =
                       stock === 0
                         ? "OUT OF STOCK"
-                        : stock < 6
+                        : stock < lowStockThreshold
                           ? `LOW STOCK (${stock})`
                           : "IN STOCK";
                     const stockColor =
                       stock === 0
                         ? "text-red-600 bg-red-50 border-red-100"
-                        : stock < 6
+                        : stock < lowStockThreshold
                           ? "text-amber-600 bg-amber-50 border-amber-100"
                           : "text-emerald-600 bg-emerald-50 border-emerald-100";
 

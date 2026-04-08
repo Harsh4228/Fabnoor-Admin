@@ -6,7 +6,9 @@ import { toast } from "react-toastify";
 const GlobalDiscount = ({ token }) => {
     const [discountPercentage, setDiscountPercentage] = useState(0);
     const [isActive, setIsActive] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [lowStockThreshold, setLowStockThreshold] = useState(5);
+    const [discountLoading, setDiscountLoading] = useState(false);
+    const [stockLoading, setStockLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
 
     const fetchGlobalDiscount = async () => {
@@ -15,6 +17,7 @@ const GlobalDiscount = ({ token }) => {
             if (res.data.success) {
                 setDiscountPercentage(res.data.globalDiscount.discountPercentage);
                 setIsActive(res.data.globalDiscount.isActive);
+                setLowStockThreshold(res.data.globalDiscount.lowStockThreshold ?? 5);
             }
         } catch (err) {
             console.error("Fetch discount error:", err);
@@ -27,9 +30,9 @@ const GlobalDiscount = ({ token }) => {
         fetchGlobalDiscount();
     }, []);
 
-    const handleUpdate = async (e) => {
+    const handleDiscountUpdate = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setDiscountLoading(true);
         try {
             const res = await axios.post(
                 `${backendUrl}/api/discount/update`,
@@ -44,7 +47,28 @@ const GlobalDiscount = ({ token }) => {
         } catch (err) {
             toast.error(err.response?.data?.message || err.message);
         } finally {
-            setLoading(false);
+            setDiscountLoading(false);
+        }
+    };
+
+    const handleStockUpdate = async (e) => {
+        e.preventDefault();
+        setStockLoading(true);
+        try {
+            const res = await axios.post(
+                `${backendUrl}/api/discount/update`,
+                { lowStockThreshold },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (res.data.success) {
+                toast.success("Low stock threshold updated successfully");
+            } else {
+                toast.error(res.data.message);
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.message);
+        } finally {
+            setStockLoading(false);
         }
     };
 
@@ -65,7 +89,8 @@ const GlobalDiscount = ({ token }) => {
                 </p>
             </div>
 
-            <form onSubmit={handleUpdate} className="space-y-6">
+            {/* ── Discount Form ── */}
+            <form onSubmit={handleDiscountUpdate} className="space-y-6 mb-8">
                 <div className="admin-card overflow-hidden">
                     <div className="bg-slate-900 px-6 py-4 flex items-center justify-between">
                         <h3 className="text-xs font-bold text-white uppercase tracking-widest">Pricing Control Hub</h3>
@@ -140,13 +165,13 @@ const GlobalDiscount = ({ token }) => {
 
                 <button
                     type="submit"
-                    disabled={loading}
-                    className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all transform active:scale-95 ${loading ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-1'}`}
+                    disabled={discountLoading}
+                    className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all transform active:scale-95 ${discountLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-1'}`}
                 >
-                    {loading ? (
+                    {discountLoading ? (
                         <>
                             <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                            UPDATING SYSTEM...
+                            UPDATING...
                         </>
                     ) : (
                         <>
@@ -154,6 +179,53 @@ const GlobalDiscount = ({ token }) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                             Apply Pricing Policy
+                        </>
+                    )}
+                </button>
+            </form>
+
+            {/* ── Low Stock Threshold Form ── */}
+            <form onSubmit={handleStockUpdate} className="space-y-6">
+                <div className="admin-card overflow-hidden">
+                    <div className="bg-slate-900 px-6 py-4">
+                        <h3 className="text-xs font-bold text-white uppercase tracking-widest">Inventory Alert Settings</h3>
+                    </div>
+                    <div className="p-8 space-y-4">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Low Stock Threshold (packs)</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                min="1"
+                                max="999"
+                                placeholder="e.g. 5"
+                                value={lowStockThreshold}
+                                onChange={(e) => setLowStockThreshold(e.target.value)}
+                                className="w-full pl-6 pr-16 py-4 bg-white border-2 border-slate-100 rounded-2xl outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 transition-all font-black text-2xl text-slate-900"
+                            />
+                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-300 uppercase">packs</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-medium italic ml-1">
+                            * Variants with stock &gt; 0 and &lt; this value will be flagged as "Low Stock" in the admin panel and product pages.
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                    type="submit"
+                    disabled={stockLoading}
+                    className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all transform active:scale-95 ${stockLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600 text-white hover:-translate-y-1'}`}
+                >
+                    {stockLoading ? (
+                        <>
+                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                            UPDATING...
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Save Stock Threshold
                         </>
                     )}
                 </button>
