@@ -18,6 +18,7 @@ const SignupRequests = ({ token }) => {
   const [modalMobile, setModalMobile] = useState("");
   const [modalEmail, setModalEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [sendEmail, setSendEmail] = useState(true);
 
   /* ─── fetch ─────────────────────────────────────────── */
   const fetchRequests = async () => {
@@ -53,6 +54,7 @@ const SignupRequests = ({ token }) => {
     setPassword("");
     setConfirmPassword("");
     setShowPassword(false);
+    setSendEmail(true);
   };
 
   const closeModal = () => {
@@ -86,6 +88,7 @@ const SignupRequests = ({ token }) => {
           email: modalEmail,
           shopName,
           password,
+          sendEmail,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -337,6 +340,20 @@ const SignupRequests = ({ token }) => {
                   placeholder="Re-enter password"
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+              </div>
+
+              {/* Send Email Option */}
+              <div className="flex items-center gap-2 pt-1 pb-1">
+                <input
+                  type="checkbox"
+                  id="sendEmailCheckbox"
+                  checked={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <label htmlFor="sendEmailCheckbox" className="text-sm text-slate-700 cursor-pointer select-none font-medium">
+                  Email login details to user
+                </label>
               </div>
 
               {/* Actions */}
