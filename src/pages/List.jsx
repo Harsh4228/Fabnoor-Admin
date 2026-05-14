@@ -80,6 +80,7 @@ const FilterSelect = ({ value, onChange, options, placeholder }) => {
                       ? "bg-slate-900 text-white"
                       : "text-slate-700 hover:bg-blue-50 hover:text-blue-700"
                   }`}
+                  
                 >
                   {o.label}
                 </button>
