@@ -304,7 +304,9 @@ const List = ({ token }) => {
   /* ================= FETCH ================= */
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(`${backendUrl}/api/product/list`);
+      const res = await axios.get(`${backendUrl}/api/product/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (res.data.success) setProducts(res.data.products);
     } catch (err) {
       toast.error(err.message);
