@@ -19,6 +19,7 @@ import PageImages from "./pages/PageImages";
 import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
 import SignupRequests from "./pages/SignupRequests";
+import WhatsAppBroadcast from "./pages/WhatsAppBroadcast";
 
 const App = () => {
   const [token, setToken] = useState(
@@ -77,6 +78,7 @@ const App = () => {
                     path="/reports"
                     element={<Reports token={token} />}
                   />
+                  <Route path="/whatsapp" element={<WhatsAppBroadcast token={token} />} />
                   <Route path="*" element={<Dashboard token={token} />} />
                 </Routes>
               </div>
