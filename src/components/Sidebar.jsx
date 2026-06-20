@@ -48,7 +48,7 @@ const NAV = [
 ];
 
 /* ── Shared nav-link renderer ─────────────────────────────── */
-const NavItem = ({ item, onClick }) => (
+const NavItem = ({ item, onClick, badge = 0 }) => (
   <NavLink
     to={item.to}
     onClick={onClick}
@@ -65,7 +65,12 @@ const NavItem = ({ item, onClick }) => (
         <span className={`transition-colors ${isActive ? "text-white" : "text-slate-400 group-hover:text-white"}`}>
           <Icon d={item.icon} />
         </span>
-        <span className="text-[13.5px] font-medium leading-none">{item.label}</span>
+        <span className="text-[13.5px] font-medium leading-none flex-1">{item.label}</span>
+        {badge > 0 && (
+          <span className="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
       </>
     )}
   </NavLink>
@@ -78,7 +83,7 @@ const SectionLabel = ({ label }) => (
   </p>
 );
 
-const Sidebar = () => {
+const Sidebar = ({ waUnread = 0 }) => {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -88,7 +93,12 @@ const Sidebar = () => {
         item.section ? (
           <SectionLabel key={i} label={item.section} />
         ) : (
-          <NavItem key={item.to} item={item} onClick={close} />
+          <NavItem
+            key={item.to}
+            item={item}
+            onClick={close}
+            badge={item.to === "/whatsapp-chat" ? waUnread : 0}
+          />
         )
       )}
     </nav>
