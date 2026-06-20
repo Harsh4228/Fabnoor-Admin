@@ -67,6 +67,8 @@ const App = () => {
                     path="/category"
                     element={<Category token={token} />}
                   />
+
+                  
                   <Route
                     path="/hero"
                     element={<HeroImages token={token} />}
