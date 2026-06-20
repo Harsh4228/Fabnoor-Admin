@@ -55,6 +55,32 @@ const AppInner = ({ token, setToken }) => {
     pathnameRef.current = location.pathname;
   }, [location.pathname]);
 
+  // Auto-logout when JWT expires (proactive — no API call needed)
+  useEffect(() => {
+    if (!token) return;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const timeLeft = payload.exp * 1000 - Date.now();
+      if (timeLeft <= 0) { setToken(""); return; }
+      const timer = setTimeout(() => setToken(""), timeLeft);
+      return () => clearTimeout(timer);
+    } catch {
+      setToken("");
+    }
+  }, [token, setToken]);
+
+  // Intercept any 401 response from any fetch call across all pages
+  useEffect(() => {
+    if (!token) return;
+    const original = window.fetch;
+    window.fetch = async (...args) => {
+      const res = await original(...args);
+      if (res.status === 401) setToken("");
+      return res;
+    };
+    return () => { window.fetch = original; };
+  }, [token, setToken]);
+
   // Reset unread badge when on the chat page
   useEffect(() => {
     if (location.pathname === "/whatsapp-chat") {
