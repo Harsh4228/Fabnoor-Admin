@@ -203,6 +203,8 @@ const Add = ({ token }) => {
       formData.append("bestseller", bestseller);
       formData.append("discount", discount);
 
+      
+
       // ✅ Variants JSON (NO images here)
       formData.append(
         "variants",
