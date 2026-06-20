@@ -20,6 +20,7 @@ import Dashboard from "./pages/Dashboard";
 import Reports from "./pages/Reports";
 import SignupRequests from "./pages/SignupRequests";
 import WhatsAppBroadcast from "./pages/WhatsAppBroadcast";
+import WhatsAppChat from "./pages/WhatsAppChat";
 
 const App = () => {
   const [token, setToken] = useState(
@@ -79,6 +80,7 @@ const App = () => {
                     element={<Reports token={token} />}
                   />
                   <Route path="/whatsapp" element={<WhatsAppBroadcast token={token} />} />
+                  <Route path="/whatsapp-chat" element={<WhatsAppChat token={token} />} />
                   <Route path="*" element={<Dashboard token={token} />} />
                 </Routes>
               </div>
