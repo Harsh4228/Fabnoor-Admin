@@ -23,6 +23,23 @@ const timeLabel = (date) =>
 const dayLabel = (date) =>
   new Date(date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
 
+// Tick icon for message status
+const StatusTick = ({ status }) => {
+  if (status === "read") {
+    return <span style={{ color: "#53bdeb", fontSize: 11 }}>✓✓</span>;
+  }
+  if (status === "delivered") {
+    return <span style={{ color: "#8696a0", fontSize: 11 }}>✓✓</span>;
+  }
+  if (status === "sent") {
+    return <span style={{ color: "#8696a0", fontSize: 11 }}>✓</span>;
+  }
+  if (status === "failed") {
+    return <span style={{ color: "#f00", fontSize: 11 }}>⚠</span>;
+  }
+  return <span style={{ color: "#8696a0", fontSize: 11 }}>✓</span>;
+};
+
 const WhatsAppChat = ({ token }) => {
   const [conversations, setConversations] = useState([]);
   const [convLoading, setConvLoading] = useState(true);
@@ -60,19 +77,17 @@ const WhatsAppChat = ({ token }) => {
     loadConversations();
   }, [loadConversations]);
 
-  /* ── Socket.io — live push for new messages / status updates ── */
+  /* ── Socket.io ── */
   useEffect(() => {
     const socket = io(backendUrl, { transports: ["websocket", "polling"] });
     socketRef.current = socket;
 
     socket.on("whatsapp:new-message", ({ mobile, message }) => {
-      // Keep the open thread in sync
       if (selectedMobileRef.current === mobile) {
         setMessages((prev) =>
           prev.some((m) => m._id === message._id) ? prev : [...prev, message]
         );
       }
-      // Refresh the sidebar (unread counts, ordering, last message preview)
       loadConversations();
     });
 
@@ -85,26 +100,26 @@ const WhatsAppChat = ({ token }) => {
     return () => socket.disconnect();
   }, [loadConversations]);
 
-  /* ── Auto-scroll to latest message ────────────────────── */
+  /* ── Auto-scroll ── */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  /* ── Select a conversation ────────────────────────────── */
+  /* ── Open conversation ── */
   const openConversation = async (mobile) => {
     setSelectedMobile(mobile);
     setMsgLoading(true);
     setMessages([]);
     try {
-      const res = await fetch(`${backendUrl}/api/whatsapp/conversations/${mobile}/messages`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${backendUrl}/api/whatsapp/conversations/${mobile}/messages`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       const data = await res.json();
       if (data.success) {
         setMessages(data.messages);
         setSelectedConv(data.conversation);
       }
-      // Mark read — fire and forget
       fetch(`${backendUrl}/api/whatsapp/conversations/${mobile}/read`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -120,18 +135,23 @@ const WhatsAppChat = ({ token }) => {
     }
   };
 
-  /* ── Send a reply ──────────────────────────────────────── */
+  /* ── Send ── */
   const handleSend = async () => {
     const body = draft.trim();
     if (!body || !selectedMobile || sending) return;
-
     setSending(true);
     try {
-      const res = await fetch(`${backendUrl}/api/whatsapp/conversations/${selectedMobile}/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ body }),
-      });
+      const res = await fetch(
+        `${backendUrl}/api/whatsapp/conversations/${selectedMobile}/send`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ body }),
+        }
+      );
       const data = await res.json();
       if (data.success) {
         setMessages((prev) =>
@@ -158,7 +178,7 @@ const WhatsAppChat = ({ token }) => {
     }
   };
 
-  /* ── Derived state ─────────────────────────────────────── */
+  /* ── Derived ── */
   const filteredConversations = conversations.filter(
     (c) =>
       !search ||
@@ -171,40 +191,115 @@ const WhatsAppChat = ({ token }) => {
     : null;
   const withinWindow = sessionExpiresAt && sessionExpiresAt > new Date();
 
-  /* ──────────────────────────────────────────────────────── */
+  /* ─────────────────────────────────────────────────────────────────────
+     LAYOUT STRATEGY
+     ─ The admin layout has: top navbar ~64px + left sidebar ~220px
+     ─ The page content area is the remaining space
+     ─ We use fixed pixel offsets via inline style so the chat always
+       fills exactly the visible area regardless of parent CSS
+  ──────────────────────────────────────────────────────────────────── */
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-green-600 flex items-center justify-center flex-shrink-0 text-white">
-          {WA_SVG()}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "calc(100vh - 64px)", // subtract top navbar height
+        overflow: "hidden",
+      }}
+    >
+      {/* ── Page header (hidden on mobile when chat is open) ── */}
+      <div
+        style={{
+          display: selectedMobile ? undefined : "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "0 0 12px 0",
+          flexShrink: 0,
+        }}
+        className={selectedMobile ? "hidden md:flex" : ""}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            background: "#16a34a",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            flexShrink: 0,
+          }}
+        >
+          {WA_SVG("w-5 h-5")}
         </div>
         <div>
-          <h1 className="text-xl font-bold text-slate-800">WhatsApp Chat</h1>
-          <p className="text-sm text-slate-500">View customer replies and respond in real time</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+            WhatsApp Chat
+          </h1>
+          <p style={{ fontSize: 13, color: "#64748b", margin: 0 }}>
+            View customer replies and respond in real time
+          </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden flex h-[calc(100vh-220px)] min-h-[480px]">
-        {/* ── Sidebar: conversation list ── */}
-        <div className="w-[300px] flex-shrink-0 border-r border-slate-200 flex flex-col">
-          <div className="p-3 border-b border-slate-100">
+      {/* ── Main chat panel ── */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          borderRadius: 16,
+          border: "1px solid #e2e8f0",
+          overflow: "hidden",
+          background: "#fff",
+        }}
+      >
+        {/* ════════════════════════════════
+            SIDEBAR — conversation list
+        ════════════════════════════════ */}
+        <div
+          style={{
+            width: 300,
+            minWidth: 300,
+            flexShrink: 0,
+            borderRight: "1px solid #e2e8f0",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+          className={selectedMobile ? "hidden md:flex" : ""}
+        // On mobile: show sidebar only when no conversation selected
+        >
+          {/* Search */}
+          <div style={{ padding: "10px 12px", borderBottom: "1px solid #f1f5f9", flexShrink: 0 }}>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search name or mobile..."
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: 8,
+                fontSize: 13,
+                outline: "none",
+                boxSizing: "border-box",
+              }}
             />
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          {/* List */}
+          <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
             {convLoading ? (
-              <div className="flex items-center justify-center py-10">
+              <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
                 <Spinner cls="w-5 h-5 text-slate-400" />
               </div>
             ) : filteredConversations.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-10 px-4">
+              <p style={{ textAlign: "center", color: "#94a3b8", fontSize: 13, padding: "40px 16px" }}>
                 No conversations yet — they'll appear here once a customer replies.
               </p>
             ) : (
@@ -214,29 +309,85 @@ const WhatsAppChat = ({ token }) => {
                   <button
                     key={c.mobile}
                     onClick={() => openConversation(c.mobile)}
-                    className={`w-full flex items-start gap-3 px-4 py-3 text-left border-b border-slate-50 transition-all ${
-                      isActive ? "bg-blue-50" : "hover:bg-slate-50"
-                    }`}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 10,
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      borderBottom: "1px solid #f8fafc",
+                      background: isActive ? "#eff6ff" : "transparent",
+                      cursor: "pointer",
+                      border: "none",
+                      borderBottom: "1px solid #f1f5f9",
+                      transition: "background 0.15s",
+                    }}
+                    onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#f8fafc"; }}
+                    onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
                   >
-                    <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-500 flex-shrink-0">
+                    {/* Avatar */}
+                    <div style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      background: "#e2e8f0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: "#475569",
+                      flexShrink: 0,
+                    }}>
                       {(c.name || c.mobile).charAt(0).toUpperCase()}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-slate-700 truncate">
+
+                    {/* Info */}
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+                        <span style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: "#334155",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          flex: 1,
+                        }}>
                           {c.name || c.mobile}
-                        </p>
-                        <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                        </span>
+                        <span style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap", flexShrink: 0 }}>
                           {c.lastMessageAt ? timeLabel(c.lastMessageAt) : ""}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between gap-2 mt-0.5">
-                        <p className="text-xs text-slate-400 truncate">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
+                        <span style={{
+                          fontSize: 12,
+                          color: "#94a3b8",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          flex: 1,
+                        }}>
                           {c.lastDirection === "out" ? "You: " : ""}
                           {c.lastMessage || "—"}
-                        </p>
+                        </span>
                         {c.unreadCount > 0 && (
-                          <span className="flex-shrink-0 bg-green-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          <span style={{
+                            flexShrink: 0,
+                            background: "#22c55e",
+                            color: "#fff",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            borderRadius: "50%",
+                            width: 20,
+                            height: 20,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginLeft: 6,
+                          }}>
                             {c.unreadCount > 9 ? "9+" : c.unreadCount}
                           </span>
                         )}
@@ -249,64 +400,168 @@ const WhatsAppChat = ({ token }) => {
           </div>
         </div>
 
-        {/* ── Thread ── */}
-        <div className="flex-1 flex flex-col bg-[#ece5dd]">
+        {/* ════════════════════════════════
+            THREAD — message view
+        ════════════════════════════════ */}
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: selectedMobile ? "flex" : "none",
+            flexDirection: "column",
+            minHeight: 0,
+            background: "#ece5dd",
+          }}
+          // show thread on desktop always
+          className="md:!flex"
+        >
           {!selectedMobile ? (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-sm text-slate-500">Select a conversation to view messages</p>
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <p style={{ fontSize: 14, color: "#64748b" }}>Select a conversation to view messages</p>
             </div>
           ) : (
             <>
-              {/* Thread header */}
-              <div className="bg-white border-b border-slate-200 px-5 py-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-500">
+              {/* ── Thread header ── */}
+              <div style={{
+                background: "#fff",
+                borderBottom: "1px solid #e2e8f0",
+                padding: "10px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                flexShrink: 0,
+              }}>
+                {/* Back button — mobile only */}
+                <button
+                  onClick={() => { setSelectedMobile(null); setSelectedConv(null); setMessages([]); }}
+                  className="md:hidden"
+                  style={{
+                    padding: 4,
+                    marginLeft: -4,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#64748b",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  aria-label="Back"
+                >
+                  <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.3} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                {/* Avatar */}
+                <div style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: "50%",
+                  background: "#e2e8f0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#475569",
+                  flexShrink: 0,
+                }}>
                   {(selectedConv?.name || selectedMobile).charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-700">
+
+                {/* Name + number */}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {selectedConv?.name || "Customer"}
                   </p>
-                  <p className="text-xs text-slate-400 font-mono">{selectedMobile}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: "#94a3b8", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {selectedMobile}
+                  </p>
+                </div>
+
+                {/* WA icon */}
+                <div style={{ color: "#16a34a", flexShrink: 0 }}>
+                  {WA_SVG("w-5 h-5")}
                 </div>
               </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
+              {/* ── Messages ── */}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  minHeight: 0,
+                  padding: "12px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                }}
+              >
                 {msgLoading ? (
-                  <div className="flex items-center justify-center py-10">
+                  <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
                     <Spinner cls="w-5 h-5 text-slate-400" />
                   </div>
                 ) : messages.length === 0 ? (
-                  <p className="text-sm text-slate-400 text-center py-10">No messages yet</p>
+                  <p style={{ textAlign: "center", color: "#94a3b8", fontSize: 13, marginTop: 40 }}>
+                    No messages yet
+                  </p>
                 ) : (
                   messages.map((m, i) => {
                     const showDay =
-                      i === 0 || dayLabel(m.timestamp) !== dayLabel(messages[i - 1].timestamp);
+                      i === 0 ||
+                      dayLabel(m.timestamp) !== dayLabel(messages[i - 1].timestamp);
+                    const isOut = m.direction === "out";
+
                     return (
                       <React.Fragment key={m._id || i}>
                         {showDay && (
-                          <div className="flex justify-center my-2">
-                            <span className="text-[11px] bg-white/70 text-slate-500 px-3 py-1 rounded-full font-medium">
+                          <div style={{ display: "flex", justifyContent: "center", margin: "8px 0" }}>
+                            <span style={{
+                              fontSize: 12,
+                              background: "rgba(255,255,255,0.75)",
+                              color: "#475569",
+                              padding: "3px 12px",
+                              borderRadius: 999,
+                              fontWeight: 500,
+                            }}>
                               {dayLabel(m.timestamp)}
                             </span>
                           </div>
                         )}
-                        <div className={`flex ${m.direction === "out" ? "justify-end" : "justify-start"}`}>
-                          <div
-                            className={`max-w-[65%] rounded-xl px-3 py-2 shadow-sm ${
-                              m.direction === "out" ? "bg-[#dcf8c6]" : "bg-white"
-                            }`}
-                          >
-                            <p className="text-[13.5px] text-slate-800 whitespace-pre-wrap break-words">
+
+                        <div style={{
+                          display: "flex",
+                          justifyContent: isOut ? "flex-end" : "flex-start",
+                          marginBottom: 2,
+                        }}>
+                          <div style={{
+                            maxWidth: "65%",
+                            background: isOut ? "#dcf8c6" : "#fff",
+                            borderRadius: isOut ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
+                            padding: "7px 12px 5px",
+                            boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                            wordBreak: "break-word",
+                          }}>
+                            <p style={{
+                              margin: 0,
+                              fontSize: 13.5,
+                              color: "#1e293b",
+                              lineHeight: 1.45,
+                              whiteSpace: "pre-wrap",
+                            }}>
                               {m.body}
                             </p>
-                            <div className="flex items-center justify-end gap-1 mt-1">
-                              <span className="text-[10px] text-slate-400">{timeLabel(m.timestamp)}</span>
-                              {m.direction === "out" && (
-                                <span className="text-[10px] text-slate-400">
-                                  {m.status === "read" ? "✓✓" : m.status === "delivered" ? "✓✓" : m.status === "failed" ? "⚠" : "✓"}
-                                </span>
-                              )}
+                            <div style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "flex-end",
+                              gap: 3,
+                              marginTop: 3,
+                            }}>
+                              <span style={{ fontSize: 11, color: "#8696a0" }}>
+                                {timeLabel(m.timestamp)}
+                              </span>
+                              {isOut && <StatusTick status={m.status} />}
                             </div>
                           </div>
                         </div>
@@ -317,38 +572,107 @@ const WhatsAppChat = ({ token }) => {
                 <div ref={bottomRef} />
               </div>
 
-              {/* Session window banner */}
+              {/* ── Session expired banner ── */}
               {!withinWindow && (
-                <div className="px-5 py-2 bg-amber-50 border-t border-amber-200 text-amber-700 text-xs flex items-center gap-2">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div style={{
+                  padding: "8px 20px",
+                  background: "#fffbeb",
+                  borderTop: "1px solid #fde68a",
+                  color: "#b45309",
+                  fontSize: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexShrink: 0,
+                }}>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   24-hour reply window has closed. Use WhatsApp Broadcast to send a template message instead.
                 </div>
               )}
 
-              {/* Composer */}
-              <div className="bg-white border-t border-slate-200 p-3 flex items-end gap-2">
+              {/* ── Composer ── */}
+              <div style={{
+                background: "#f0f2f5",
+                borderTop: "1px solid #e2e8f0",
+                padding: "10px 16px",
+                display: "flex",
+                alignItems: "flex-end",
+                gap: 10,
+                flexShrink: 0,
+              }}>
                 <textarea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={handleKeyDown}
                   disabled={!withinWindow || sending}
                   rows={1}
-                  placeholder={withinWindow ? "Type a message..." : "Reply window closed"}
-                  className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none disabled:opacity-50"
+                  placeholder={withinWindow ? "Type a message..." : "Reply window closed — use Broadcast to send a template"}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    padding: "10px 14px",
+                    background: "#fff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 24,
+                    fontSize: 13.5,
+                    color: "#1e293b",
+                    outline: "none",
+                    resize: "none",
+                    lineHeight: 1.4,
+                    opacity: (!withinWindow || sending) ? 0.6 : 1,
+                    fontFamily: "inherit",
+                  }}
                 />
                 <button
                   onClick={handleSend}
                   disabled={!withinWindow || sending || !draft.trim()}
-                  className="px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2"
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: "50%",
+                    background: (!withinWindow || sending || !draft.trim()) ? "#94a3b8" : "#16a34a",
+                    border: "none",
+                    cursor: (!withinWindow || sending || !draft.trim()) ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    transition: "background 0.2s",
+                  }}
+                  aria-label="Send"
                 >
-                  {sending ? <Spinner cls="w-4 h-4" /> : "Send"}
+                  {sending ? (
+                    <Spinner cls="w-4 h-4" />
+                  ) : (
+                    <svg width="20" height="20" fill="none" stroke="#fff" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  )}
                 </button>
               </div>
             </>
           )}
         </div>
+
+        {/* Desktop: show placeholder when no convo selected */}
+        {!selectedMobile && (
+          <div
+            className="hidden md:flex"
+            style={{
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#ece5dd",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
+            <div style={{ color: "#16a34a", opacity: 0.4 }}>{WA_SVG("w-16 h-16")}</div>
+            <p style={{ fontSize: 15, color: "#64748b" }}>Select a conversation to start chatting</p>
+          </div>
+        )}
       </div>
     </div>
   );
