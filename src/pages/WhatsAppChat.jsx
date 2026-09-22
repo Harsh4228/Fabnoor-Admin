@@ -78,9 +78,34 @@ const WhatsAppChat = ({ token }) => {
   }, [loadConversations]);
 
   /* ── Socket.io ── */
+  // Resyncs the sidebar + the currently-open thread from the server. Used on
+  // every socket (re)connect and on a safety-net interval, so a reply is
+  // never permanently missed just because a single "new-message" push got
+  // dropped (server restarts, free-tier sleep/wake, brief disconnects, etc.).
+  const resyncAll = useCallback(async () => {
+    loadConversations();
+    const mobile = selectedMobileRef.current;
+    if (!mobile) return;
+    try {
+      const res = await fetch(
+        `${backendUrl}/api/whatsapp/conversations/${mobile}/messages`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setMessages(data.messages);
+        setSelectedConv(data.conversation);
+      }
+    } catch {
+      // best-effort background resync — ignore transient errors
+    }
+  }, [token, loadConversations]);
+
   useEffect(() => {
     const socket = io(backendUrl, { transports: ["websocket", "polling"] });
     socketRef.current = socket;
+
+    socket.on("connect", resyncAll);
 
     socket.on("whatsapp:new-message", ({ mobile, message }) => {
       if (selectedMobileRef.current === mobile) {
@@ -97,8 +122,13 @@ const WhatsAppChat = ({ token }) => {
       );
     });
 
-    return () => socket.disconnect();
-  }, [loadConversations]);
+    const pollId = setInterval(resyncAll, 15000);
+
+    return () => {
+      socket.disconnect();
+      clearInterval(pollId);
+    };
+  }, [loadConversations, resyncAll]);
 
   /* ── Auto-scroll ── */
   useEffect(() => {

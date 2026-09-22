@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
@@ -89,8 +89,8 @@ const AppInner = ({ token, setToken }) => {
     }
   }, [location.pathname]);
 
-  // Fetch initial unread count from existing conversations
-  useEffect(() => {
+  // Fetch (and re-fetch) total unread count from existing conversations
+  const fetchUnread = useCallback(() => {
     if (!token) return;
     fetch(`${backendUrl}/api/whatsapp/conversations`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -108,10 +108,18 @@ const AppInner = ({ token, setToken }) => {
       .catch(() => {});
   }, [token]);
 
+  useEffect(() => {
+    fetchUnread();
+  }, [fetchUnread]);
+
   // Global socket — always-on, shows toast + badge on any page
   useEffect(() => {
     if (!token) return;
     const socket = io(backendUrl, { transports: ["websocket", "polling"] });
+
+    // Resync on every (re)connect so a push missed while disconnected
+    // (server restarts, free-tier sleep/wake, etc.) isn't lost forever.
+    socket.on("connect", fetchUnread);
 
     socket.on("whatsapp:new-message", ({ message, mobile, unreadCount }) => {
       if (message?.direction !== "in") return;
@@ -137,8 +145,14 @@ const AppInner = ({ token, setToken }) => {
       );
     });
 
-    return () => socket.disconnect();
-  }, [token, navigate]);
+    // Safety-net poll in case a socket push is ever missed entirely.
+    const pollId = setInterval(fetchUnread, 30000);
+
+    return () => {
+      socket.disconnect();
+      clearInterval(pollId);
+    };
+  }, [token, navigate, fetchUnread]);
 
   return (
     <div className="bg-slate-50 min-h-screen">
