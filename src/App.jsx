@@ -23,6 +23,7 @@ import Reports from "./pages/Reports";
 import SignupRequests from "./pages/SignupRequests";
 import WhatsAppBroadcast from "./pages/WhatsAppBroadcast";
 import WhatsAppChat from "./pages/WhatsAppChat";
+import Trash from "./pages/Trash";
 
 const WA_GREEN = "#22c55e";
 
@@ -172,6 +173,7 @@ const AppInner = ({ token, setToken }) => {
                   <Route path="/reports" element={<Reports token={token} />} />
                   <Route path="/whatsapp" element={<WhatsAppBroadcast token={token} />} />
                   <Route path="/whatsapp-chat" element={<WhatsAppChat token={token} />} />
+                  <Route path="/trash" element={<Trash token={token} />} />
                   <Route path="*" element={<Dashboard token={token} />} />
                 </Routes>
               </div>
